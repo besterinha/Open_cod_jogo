@@ -1,5 +1,7 @@
 # STATE_REGISTRY.md
 
+> TODO: StateSystem (Sprint 5) — este registro será gerenciado pelo StateSystem.
+
 ## Flags Globais do Projeto
 
 ### Recursos da Caravana

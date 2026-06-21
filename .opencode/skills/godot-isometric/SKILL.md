@@ -11,7 +11,7 @@ grid and screen space, rendering tiles with `_draw()`, or sorting entities
 by depth for a Banner Saga-style view.
 
 ## Tile Constants
-- Tile size: 64x32 pixels (2:1 diamond aspect ratio)
+- Tile size: 32x16 pixels (2:1 diamond aspect ratio)
 - Grid orientation: pointy-top (diamond shaped)
 - Grid coordinate system: axial (col, row) where col+row determines depth
 

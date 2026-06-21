@@ -8,7 +8,7 @@
 - Todo `next` deve apontar para um ID existente no mesmo arquivo ou em arquivo referenciado
 
 ## Estado
-- Toda flag deve existir no STATE_REGISTRY.md
+- Toda flag deve existir no state_registry.md
 - Tipos de flag não mudam após definidos
 - Flags não usadas devem ser reportadas ao orquestrador
 
@@ -19,7 +19,7 @@
 
 ## Geral
 - Nenhum acesso direto entre sistemas
-- Toda comunicação via StateSystem ou JSON
+- Toda comunicação via MessageBus ou queries diretas
 - PROJECT_MAP é a única verdade sobre a estrutura do projeto
-- STATE_REGISTRY é a única verdade sobre variáveis globais
-- SCENE_MANIFEST.md é a lista autoritativa de cenas
+- state_registry é a única verdade sobre variáveis globais (quando implementado)
+- scene_manifest.md é a lista autoritativa de cenas

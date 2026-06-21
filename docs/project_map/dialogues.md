@@ -27,6 +27,6 @@
 ### Regras
 - Esta é a lista autoritativa de IDs de diálogos
 - IDs seguem o padrão `DIA_[TEMA]_[NNN]`
-- `effects` altera flags no StateSystem quando a choice é selecionada
+- `effects` altera flags (TODO: StateSystem Sprint 5) quando a choice é selecionada
 - `conditions` filtra choices com base no estado atual (não mostra se condição falhar)
 - Qualquer ID não listado aqui é considerado fora do escopo

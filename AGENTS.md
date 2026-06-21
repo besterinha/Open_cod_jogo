@@ -162,7 +162,7 @@ relevante. Ex: se for criar grid, faça
 | 5. Mutation Testing | Testes que não testam nada | `tests/mutation/mutation_test.sh` |
 | 6. Contract Testing | Interfaces divergentes | `tests/contract/` (MessageBus + queries) |
 | 7. Smoke/E2E | Fluxo completo quebrado | Godot headless export |
-| 8. Builder ≠ Validator | Viés do gerador | qa-tester com `"*": "deny"` |
+| 8. Builder ≠ Validator | Viés do gerador | qa-tester com `read \| bash \| glob \| grep \| skill` (sem edit) |
 
 ## Error Recovery
 - **Antes de cada tarefa**: `git add -A && git commit -m "snapshot: ..."`

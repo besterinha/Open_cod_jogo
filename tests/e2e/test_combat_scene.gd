@@ -11,4 +11,5 @@ func test_combat_scene_loads() -> void:
 	helper.assert_node_exists(scene, "GridSystem")
 	helper.assert_node_exists(scene, "Hero")
 	helper.assert_node_exists(scene, "Camera")
+	helper.assert_node_exists(scene, "TouchController")
 	scene.queue_free()

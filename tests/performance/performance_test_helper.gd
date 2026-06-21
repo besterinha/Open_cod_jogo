@@ -24,7 +24,7 @@ func capture() -> Dictionary:
 	}
 
 
-func capture_baseline(frames: int = DEFAULT_FRAMES) -> void:
+func capture_baseline() -> void:
 	_baseline = capture()
 
 

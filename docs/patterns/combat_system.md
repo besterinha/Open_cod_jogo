@@ -8,7 +8,7 @@ Sistema de combate tático por turnos orientado a dados.
 - Personagens definidos por JSON (stats, classe, habilidades)
 - Habilidades definidas por JSON (nome, dano, alcance, efeitos)
 - Sistema de recursos afetando stats (ex: moral, suprimentos)
-- Comunicação apenas via StateSystem
+- TODO: StateSystem (Sprint 5) para comunicação entre sistemas
 
 ## Interface Pública
 - `execute_turn(state: Dictionary) -> Dictionary`

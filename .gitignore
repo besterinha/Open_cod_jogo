@@ -35,5 +35,8 @@ visual_tests/node_modules/
 visual_tests/playwright-report/
 visual_tests/screenshots/
 
+# claude context backup
+claude/
+
 # Generated test reports
 tests/*/report*.json

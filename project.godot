@@ -7,6 +7,7 @@ config/description="Motor de TRPG tático genérico (estilo Banner Saga)"
 config/icon="res://assets/icons/icon.png"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 config/use_hidden_project_data_directory=true
+main_scene="res://src/scenes/main_scene.tscn"
 
 [display]
 

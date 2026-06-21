@@ -7,7 +7,7 @@ Motor de diálogo genérico que interpreta JSONs e gerencia ramificações narra
 - Lê JSONs da pasta `/src/data/dialogues/`
 - IDs estruturados como `DIA_[TEMA]_[NNN]`
 - Navega entre nós com base em `next` e condições de estado
-- Consequências registradas via StateSystem
+- TODO: StateSystem (Sprint 5) para consequências e condições
 - Estrutura de JSON padronizada (version, id, text, choices)
 
 ## Interface Pública
