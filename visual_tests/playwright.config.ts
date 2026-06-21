@@ -1,0 +1,17 @@
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: 30000,
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8080',
+    headless: true,
+    viewport: { width: 1080, height: 2340 },
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { browserName: 'chromium' },
+    },
+  ],
+});

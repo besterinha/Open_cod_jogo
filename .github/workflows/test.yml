@@ -1,0 +1,84 @@
+name: CI — Test Suite
+
+on:
+  push:
+    branches-ignore: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: firebelley/setup-godot@v2
+        with:
+          godot-version: 4.5.stable
+      - name: Check scripts syntax
+        run: |
+          failed=0
+          while IFS= read -r -d '' f; do
+            # Skip files that extend GdUnitTestSuite (need plugin loaded)
+            if grep -q "extends GdUnitTestSuite" "$f" 2>/dev/null; then
+              echo "SKIP (gdUnit4-dependent): $f"
+              continue
+            fi
+            if ! godot --headless --check-only --script "res://$f" 2>&1; then
+              echo "SYNTAX ERROR: $f"
+              failed=1
+            fi
+          done < <(find tests -name '*.gd' -print0)
+          if [ -d src ]; then
+            while IFS= read -r -d '' f; do
+              if ! godot --headless --check-only --script "res://$f" 2>&1; then
+                echo "SYNTAX ERROR: $f"
+                failed=1
+              fi
+            done < <(find src -name '*.gd' -print0)
+          fi
+          exit $failed
+
+  unit-tests:
+    name: gdUnit4 tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: firebelley/setup-godot@v2
+        with:
+          godot-version: 4.5.stable
+      - name: Build script cache (required for gdUnit4 class resolution)
+        run: godot --headless --import 2>&1 || true
+      - name: Run gdUnit4
+        run: |
+          godot --headless -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd \
+            -a res://tests --ignoreHeadlessMode -c
+
+  mutation:
+    name: Mutation testing
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: firebelley/setup-godot@v2
+        with:
+          godot-version: 4.5.stable
+      - name: Run mutation tests
+        run: bash tests/mutation/mutation_test.sh
+
+  smoke-e2e:
+    name: Smoke tests (E2E)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: firebelley/setup-godot@v2
+        with:
+          godot-version: 4.5.stable
+      - name: Run smoke tests
+        run: bash tests/e2e/smoke_test.sh

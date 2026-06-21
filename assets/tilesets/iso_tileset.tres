@@ -1,0 +1,40 @@
+[gd_resource type="TileSet" load_steps=4 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/tilesets/iso_tileset.png" id="1_tiles"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_walkable"]
+vertices = PackedVector2Array(16, 0, 0, 8, -16, 0, 0, -8)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-16, 0, 0, -8, 16, 0, 0, 8)])
+agent_radius = 0.0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ground"]
+texture = ExtResource("1_tiles")
+texture_region_size = Vector2i(32, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+0:0/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_walkable")
+0:1/0 = 0
+0:1/0/texture_origin = Vector2i(0, -8)
+0:2/0 = 0
+0:2/0/texture_origin = Vector2i(0, -8)
+0:2/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_walkable")
+0:3/0 = 0
+0:3/0/texture_origin = Vector2i(0, -8)
+0:4/0 = 0
+0:4/0/texture_origin = Vector2i(0, -8)
+0:5/0 = 0
+0:5/0/texture_origin = Vector2i(0, -8)
+0:6/0 = 0
+0:6/0/texture_origin = Vector2i(0, -8)
+0:1/0/y_sort_origin = 1
+
+[resource]
+tile_shape = 1
+tile_layout = 5
+tile_offset_axis = 1
+tile_size = Vector2i(32, 16)
+navigation_layer_0/layers = 1
+custom_data_layer_0/name = "is_walkable"
+custom_data_layer_0/type = 1
+sources/0 = SubResource("TileSetAtlasSource_ground")

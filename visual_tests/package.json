@@ -1,0 +1,12 @@
+{
+  "name": "opencod-jogo-visual-tests",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "serve": "serve ../build/web -p 8080"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "serve": "^14.2.0"
+  }
+}

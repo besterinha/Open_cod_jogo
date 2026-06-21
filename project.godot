@@ -1,0 +1,34 @@
+config_version=5
+
+[application]
+
+config/name="Open cod jogo"
+config/description="Motor de TRPG tático genérico (estilo Banner Saga)"
+config/icon="res://assets/icons/icon.png"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+config/use_hidden_project_data_directory=true
+
+[display]
+
+window/size/viewport_width=1920
+window/size/viewport_height=1080
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+
+[autoload]
+
+MessageBus="*res://src/globals/message_bus.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gdUnit4/plugin.cfg")
+
+[layer_names]
+
+navigation/2d_layer_1="World"

@@ -1,0 +1,39 @@
+# Godot
+.godot/
+*.import
+
+# Builds
+builds/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# Godot temp
+*.translation
+export_credentials.cfg
+
+# Binary
+Godot_v4.5-stable_linux.x86_64.zip
+extension_api.json
+
+# Godot generated reports
+reports/
+
+# Test folders
+autonomous_qa/
+
+# Visual tests artifacts (but not source scaffold)
+visual_tests/node_modules/
+visual_tests/playwright-report/
+visual_tests/screenshots/
+
+# Generated test reports
+tests/*/report*.json

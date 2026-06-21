@@ -1,0 +1,23 @@
+{
+  "current_sprint": 1,
+  "current_task": "Correcoes F4 (analise abrangente)",
+  "status": "validation_infra_ready",
+  "last_updated": "2026-06-21",
+  "tests_passing": null,
+  "last_apk": null,
+  "decisions": [
+    "Todas as decisoes F1-F3 mantidas",
+    "F4-C1: assert_signal_emitted reescrito: connect(CONNECT_ONE_SHOT) + await timer.timeout em vez de await Signal direto (evita travamento)",
+    "F4-A3: MessageBus placeholder criado em src/globals/message_bus.gd + autoload registrado em project.godot",
+    "F4-A2: smoke_test_helper.gd troca assert() GDScript por push_error() + retorno null",
+    "F4-C3: perf_test.sh remove || true, captura exit_code, retorna no final",
+    "F4-A5: mutation_test.sh remove funcao morta extract_result",
+    "F4-M2: opencode.json remove permissao invalida \"*\": \"deny\" do qa-tester",
+    "F4-M3: .gitignore ajusta padrao report*.json (cobre report_$$.json e report.json)",
+    "F4-M4: export_presets.cfg adiciona exclude_filter ao preset Web",
+    "F4-A1: performance_test_helper.gd adiciona make_budget() static + _resolve_budget() interno para aceitar chaves string ou enum int",
+    "F4-A4: tests/performance/test_performance_baseline.gd criado com budgets minimos",
+    "F4-C2: visual_tests/ scaffold criado (package.json, playwright.config.ts, tests/basic.spec.ts) + web server step no workflow",
+    "F4-M1: grid_system path alinhado para src/systems/grid_system.gd (doc + planos futuros)"
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "nvidia/qwen/qwen3-coder-480b-a35b-instruct",
+  "default_agent": "plan",
+  "mcp": {
+    "godot": {
+      "type": "local",
+      "command": ["npx", "-y", "@coding-solo/godot-mcp"],
+      "enabled": true,
+      "environment": {
+        "GODOT_PATH": "/usr/local/bin/godot"
+      }
+    }
+  },
+  "agent": {
+    "gdscript-dev": {
+      "description": "Implementa scripts GDScript para Godot 4.5 — sistemas, componentes, lógica de jogo",
+      "mode": "subagent",
+      "color": "#4CAF50",
+      "steps": 25,
+      "prompt": "You are a GDScript developer for Godot 4.5. Write strictly typed GDScript (var name: Type). Max 100 chars per line. Max 400 lines per script. Use class_name for reusable components. Connect signals via code only, never via editor. Prefer @onready for node references, use _ready() for initialization, avoid _process overhead.",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "scene-designer": {
+      "description": "Cria e modifica cenas .tscn — estrutura de nós, propriedades, recursos",
+      "mode": "subagent",
+      "color": "#2196F3",
+      "steps": 25,
+      "prompt": "You design Godot 4.5 scenes (.tscn). Use format=3, proper uid attributes. Set anchors and containers for responsive UI (mobile-first). Min touch target 48x48dp. Keep scene tree shallow. Prefer composition over deep nesting.",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "allow",
+        "bash": "deny"
+      }
+    },
+    "data-architect": {
+      "description": "Gerencia dados do jogo — JSONs de classes, habilidades, personagens, diálogos",
+      "mode": "subagent",
+      "color": "#FF9800",
+      "steps": 20,
+      "prompt": "You manage game data in JSON format. Validate structural integrity. Check for duplicate IDs, missing references, circular dependencies. Use consistent naming (snake_case keys, PascalCase type identifiers).",
+      "temperature": 0.1,
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    },
+    "game-designer": {
+      "description": "Cria Game Design Documents, define mecânicas, sistemas e fluxo de jogador",
+      "mode": "subagent",
+      "color": "#E91E63",
+      "steps": 15,
+      "temperature": 0.3,
+      "prompt": "You design game mechanics and systems for a tactical TRPG (Banner Saga-style). Produce concise GDDs with: core mechanic, player actions, system list, data flow, scene tree structure, acceptance criteria. No code. All in Portuguese.",
+      "permission": {
+        "edit": "allow",
+        "bash": "deny"
+      }
+    },
+    "art-director": {
+      "description": "Define estilo visual, paletas, assets e guias UI/UX para mobile Android",
+      "mode": "subagent",
+      "color": "#FF5722",
+      "steps": 15,
+      "temperature": 0.4,
+      "prompt": "You define visual direction for a mobile TRPG. Specify: color palette, tile aesthetic, UI layout guidelines (mobile-first, 48x48dp), font choices, asset generation prompts. Reference Godot GL Compatibility limits. No code.",
+      "permission": {
+        "edit": "allow",
+        "bash": "deny"
+      }
+    },
+    "qa-tester": {
+      "description": "Valida integridade do projeto — testes gdUnit4, sintaxe GDScript, consistência de cenas",
+      "mode": "subagent",
+      "color": "#F44336",
+      "steps": 30,
+      "prompt": "You validate Godot 4.5 project integrity. Run godot --headless --import before gdUnit4. Run gdUnit4 tests: godot --headless -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests --ignoreHeadlessMode -c. Run mutation testing: bash tests/mutation/mutation_test.sh (must be zero survivors). Validate .tscn files via MCP (godot_get_scene_tree) and UID uniqueness (rg -o 'uid://[a-z0-9]+' res:// --include '*.tscn' --include '*.uid' | sort | uniq -d). Check script references resolve, GDScript syntax valid. Consult .opencode/errors.jsonl for known fixes. Never modify files.",
+      "temperature": 0.1,
+        "permission": {
+        "read": "allow",
+        "bash": "allow",
+        "glob": "allow",
+        "grep": "allow",
+        "skill": "allow"
+        }
+    },
+    "orchestrator": {
+      "description": "Planeja sprints, distribui tarefas, coordena execução entre agentes",
+      "mode": "subagent",
+      "color": "#9C27B0",
+      "hidden": true,
+      "task_budget": 5,
+      "steps": 15,
+      "prompt": "You plan sprints following AGENTS.md. Break work into tasks. Delegate to specialized agents via Task tool. Track progress. Never write code yourself. Ensure each sprint produces a testable APK.",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "deny",
+        "bash": "allow",
+        "task": "allow",
+        "todowrite": "allow"
+      }
+    }
+  },
+  "provider": {
+    "nvidia": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NVIDIA",
+      "options": {
+        "baseURL": "https://integrate.api.nvidia.com/v1"
+      },
+      "models": {
+        "qwen/qwen3-coder-480b-a35b-instruct": {}
+      }
+    }
+  }
+}
