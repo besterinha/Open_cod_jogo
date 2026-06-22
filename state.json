@@ -2,9 +2,6 @@
   "status": "sprint_1_complete",
   "last_task": "sprint_2_planning",
   "next_step": "sprint_2_implementation",
-  "current_sprint": 2,
-  "tests_passing": true,
-  "last_apk": "build/project.apk",
   "decisions": [
     "D1-camera: Camera2D fixa centralizada no grid, zoom por pinch 0.5x-4x, sem pan nem follow",
     "D2-main_scene: project.godot aponta para combat_scene.tscn, main_scene.tscn eliminada",
@@ -17,5 +14,7 @@
     "D9-path_display: tiles do caminho A* sao destacados (highlight path) antes do hero se mover",
     "D10-reach_range: BFS de tiles alcancaveis exibido ao tocar no hero (range definido no JSON)",
     "D11-obstacles: cells bloqueadas definidas em data/combat/scenario_01.json, carregadas no setup()"
-  ]
+  ],
+  "completed_sprints": [1],
+  "current_sprint": 2
 }

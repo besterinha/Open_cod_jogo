@@ -63,7 +63,13 @@ Fase 4.
   problemas case-sensitive no export Linux.
 - **Helpers de teste**: class_name padrao `*TestHelper`
   (`SmokeTestHelper`, `PropertyTestHelper`).
-- **Builder ≠ Validator**: qa-tester nunca modifica código (permissões `"*": "deny"`)
+- **Nomenclatura de sinais**: sinais devem ser nomeados pelo dado que carregam,
+  não pela intenção de uso.
+  ✓ `signal screen_tapped(screen_pos: Vector2)`
+  ✗ `signal world_tapped(world_pos: Vector2)` — nome mente se dado é screen
+  A conversão entre espaços de coordenadas é responsabilidade do receptor
+  ou de um intermediário explícito, nunca do emissor.
+- **Builder ≠ Validator**: qa-tester nunca modifica código (apenas read/bash/glob/grep/skill)
 - **Property-based tests primeiro**: Lógica complexa (grid, pathfinding) exige
   testes de invariante com 1000+ iterações antes de testes de exemplo
 - **Mutation testing obrigatório**: Após testes passarem, executar
@@ -76,7 +82,7 @@ src/
   systems/       # Lógica de sistemas (GridSystem, CombatSystem, etc.)
   entities/      # Entidades do jogo (Hero, Enemy, Unit)
   ui/            # Interface do usuário (HUD, menus, botões)
-  scenes/        # Cenas compostas (combat_scene.tscn, main_scene.tscn)
+  scenes/        # Cenas compostas (combat_scene.tscn)
   globals/       # Autoloads (MessageBus.gd, GameConfig.gd)
   input/         # Controles (touch_controller.gd)
 data/
@@ -143,6 +149,19 @@ relevante. Ex: se for criar grid, faça
 | `qa-tester` | Testes gdUnit4, validação, APK | bash + read (sem edit) |
 | `orchestrator` | Planejamento, delegação, replanejamento | bash + task (sem edit) |
 
+> **Responsabilidade do scene-designer:** Wiring de sinais entre sistemas.
+> Toda conexão entre nós via sinal deve ser feita no script do nó raiz da cena
+> ou no `_ready()` do nó pai. Sistemas nunca devem se conectar diretamente.
+
+## REPLAN_STEP (executado pelo orchestrator antes de cada tarefa)
+1. Atualizar state.json: status, última tarefa, próximo passo
+2. Verificar se pattern docs refletem a interface pública atual (se divergirem,
+   corrigir o doc antes de prosseguir)
+3. Verificar se há decisões arquiteturais indefinidas bloqueando a próxima
+   tarefa — se houver, pausar e solicitar decisão humana
+4. Atualizar docs/project_map/index.md com status atual
+5. Confirmar que todos os Quality Gates da tarefa anterior foram cumpridos
+
 ## Fluxo de Trabalho
 1. Cada tarefa inicia com `game-designer` (se aplicável) para GDD
 2. `orchestrator` quebra em sub-tarefas e delega para agentes
@@ -150,6 +169,9 @@ relevante. Ex: se for criar grid, faça
 3. Cada implementação segue: skill → código → teste
 4. `qa-tester` valida no final: testes gdUnit4 → sintaxe → mutation testing → smoke → APK
 5. `orchestrator` executa REPLAN_STEP antes da próxima tarefa
+6. Antes de delegar qualquer tarefa de implementação, verificar se todas as
+   decisões arquiteturais necessárias estão documentadas. Se não estiverem,
+   NÃO delegar — pausar e listar as decisões pendentes para o desenvolvedor.
 
 ## Pirâmide de Validação (Ordem)
 
@@ -170,6 +192,9 @@ relevante. Ex: se for criar grid, faça
 - **Limite**: 2 falhas por tarefa. Na 3ª, pausar para intervenção humana.
 
 ## Quality Gates (Ordem Obrigatória)
+0. Documentation Sync: pattern docs em docs/patterns/ refletem a interface
+   pública atual dos sistemas. Se divergirem, o doc está errado — corrigir
+   antes de rodar qualquer teste.
 1. Todos os testes gdUnit4 passando (unit + property + contract)
 2. Sintaxe GDScript válida (`godot --headless --check-only --script res://<path>`,
    excluindo arquivos que dependem de addon — esses são validados pelo gdUnit4)

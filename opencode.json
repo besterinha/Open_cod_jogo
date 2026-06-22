@@ -93,8 +93,8 @@
       "mode": "subagent",
       "color": "#9C27B0",
       "hidden": true,
-      "task_budget": 5,
-      "steps": 15,
+      "task_budget": 15,
+      "steps": 25,
       "prompt": "You plan sprints following AGENTS.md. Break work into tasks. Delegate to specialized agents via Task tool. Track progress. Never write code yourself. Ensure each sprint produces a testable APK.",
       "temperature": 0.3,
       "permission": {

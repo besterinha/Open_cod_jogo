@@ -3,7 +3,6 @@
 ## Lista Autoritativa de Cenas do Projeto
 
 ### Cenas Existentes
-- res://src/scenes/main_scene.tscn
 - res://src/scenes/combat_scene.tscn
 
 ## Regras

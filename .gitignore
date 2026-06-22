@@ -38,5 +38,8 @@ visual_tests/screenshots/
 # claude context backup
 claude/
 
+# auditoria externa
+mimo_auditoria/
+
 # Generated test reports
 tests/*/report*.json
