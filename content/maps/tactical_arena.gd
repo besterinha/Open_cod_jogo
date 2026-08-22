@@ -8,6 +8,7 @@ extends Node3D
 @onready var combat: CombatManager = $CombatManager
 
 var selected_unit: Unit = null
+var selected_ability: AbilityResource = null
 var _db: AttributeDatabase = null
 
 func _ready() -> void:
@@ -29,6 +30,17 @@ func _ready() -> void:
 	turn_manager.setup(board)
 	movement.setup(board)
 	combat.setup(board)
+
+	# Integra HUD touch (se existir)
+	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
+	if hud:
+		if hud.has_signal("ability_selected"):
+			hud.connect("ability_selected", _on_hud_ability_selected)
+		if hud.has_signal("end_turn_pressed"):
+			hud.connect("end_turn_pressed", func() -> void: turn_manager.end_turn())
+		# seleciona primeira habilidade como default
+		if hud.has_method("get_selected"):
+			selected_ability = hud.get_selected()
 
 	# Conecta sinais
 	turn_manager.turn_started.connect(_on_turn_started)
@@ -123,6 +135,10 @@ func _play_ai(unit: Unit) -> void:
 	await get_tree().create_timer(0.5).timeout
 	turn_manager.end_turn()
 
+func _on_hud_ability_selected(abil: AbilityResource) -> void:
+	selected_ability = abil
+	print("[HUD] Habilidade selecionada touch: %s" % abil.nome)
+
 func _on_turn_changed(unit: Unit) -> void:
 	pass
 
@@ -170,12 +186,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not board.grid.is_within_bounds(cell):
 			return
 		print("[Input] Tap %s" % cell)
-		# se tem unidade inimiga na cell, ataca
+		# se tem unidade inimiga na cell, ataca com habilidade selecionada (touch) ou fallback strike
 		var target_unit: Unit = board.get_unit_at(cell)
 		if target_unit and target_unit.team != unit.team:
-			var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource
+			var abil: AbilityResource = selected_ability
+			if abil == null:
+				abil = load("res://data/abilities/strike.tres") as AbilityResource
 			if combat.use_ability(unit, abil, cell):
-				print("[Combat] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
+				print("[Combat Touch] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
 				turn_manager.end_turn()
 			else:
 				print("[Combat] Não pode usar %s em %s (alcance/custo)" % [abil.nome, cell])

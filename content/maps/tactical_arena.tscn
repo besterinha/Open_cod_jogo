@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://systems/tactical/turn/team_round_robin.gd" id="3_turn"]
 [ext_resource type="Script" path="res://systems/tactical/movement/movement_system.gd" id="4_move"]
 [ext_resource type="Script" path="res://systems/tactical/combat/combat_manager.gd" id="5_combat"]
+[ext_resource type="PackedScene" uid="uid://t4ct1c4lhudt4ct1c" path="res://ui/tactical_hud.tscn" id="6_hud"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_grid"]
 size = Vector3(0.9, 0.05, 0.9)
@@ -53,3 +54,5 @@ offset_top = 60.0
 offset_right = 700.0
 offset_bottom = 90.0
 text = "Turno: -"
+
+[node name="TacticalHUD" parent="CanvasLayer" instance=ExtResource("6_hud")]

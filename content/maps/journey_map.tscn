@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://systems/caravan/market_system.gd" id="5_market"]
 [ext_resource type="Script" path="res://systems/caravan/event_system.gd" id="6_event"]
 [ext_resource type="PackedScene" uid="uid://c4r4v4nb4rc4r4v" path="res://ui/caravan_bar.tscn" id="7_bar"]
+[ext_resource type="PackedScene" uid="uid://r4d14lm3nur4d14l" path="res://ui/radial_menu.tscn" id="8_radial"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_road"]
 size = Vector3(20, 0.1, 4)
@@ -59,9 +60,11 @@ shadow_enabled = false
 offset_top = 10.0
 offset_bottom = 50.0
 
+[node name="RadialMenu" parent="CanvasLayer" instance=ExtResource("8_radial")]
+
 [node name="HelpLabel" type="Label" parent="CanvasLayer"]
 offset_left = 20.0
 offset_top = 60.0
 offset_right = 700.0
 offset_bottom = 120.0
-text = "[T] Viajar 1 dia  [R] Descansar  [M] Mercado (1 Renown->Supplies)  [E] Evento"
+text = "[T] Viajar  [R] Descansar  [M] Mercado  [E] Evento | Toque no ☰ radial"

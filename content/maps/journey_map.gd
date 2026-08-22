@@ -24,6 +24,10 @@ func _ready() -> void:
 	travel.travel_day_completed.connect(_on_day)
 	travel.travel_finished.connect(_on_travel_finished)
 	EventBus.battle_requested.connect(_on_battle_requested)
+	# integra radial menu touch (se existir)
+	var radial: Node = get_node_or_null("CanvasLayer/RadialMenu")
+	if radial and radial.has_signal("action_pressed"):
+		radial.connect("action_pressed", _on_radial_action)
 
 func _on_day(day: int) -> void:
 	print("[Journey] Dia %d completo. Supplies %d Morale %d" % [day, caravan.supplies, caravan.morale])
@@ -39,6 +43,24 @@ func _on_travel_finished(_days: int) -> void:
 	if randf() < 0.15:
 		print("[Journey] Emboscada! Indo para combate...")
 		EventBus.battle_requested.emit("ambush")
+
+func _on_radial_action(action: String) -> void:
+	match action:
+		"viajar":
+			travel.travel_one_day()
+		"descansar":
+			camp.rest(1)
+		"mercado":
+			market.buy_supplies(1)
+			print("[Market Touch] 1 Renown -> %d Supplies | supplies %d renown %d" % [market.current_rate, caravan.supplies, caravan.renown])
+		"evento":
+			var ev: Resource = event_system.roll_random()
+			if ev:
+				print("[Event Touch] %s" % ev.get("titulo"))
+				if not ev.get("escolhas").is_empty():
+					event_system.apply_choice(ev, 0)
+		"batalha":
+			EventBus.battle_requested.emit("radial_battle")
 
 func _on_battle_requested(_id: String) -> void:
 	print("[Journey] Transição para Tático: %s" % _id)
