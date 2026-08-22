@@ -75,8 +75,12 @@ func move_to(new_cell: Vector2i, grid: GridSystem) -> void:
 	moved.emit(cell)
 
 func _update_visual() -> void:
-	# atualiza Label3D se existir
-	if has_node("Visual/Label"):
-		var lbl: Label3D = $Visual/Label
+	# atualiza Label3D se existir (Unit/Label é irmão de Visual, não Visual/Label)
+	if has_node("Label"):
+		var lbl: Label3D = $Label
 		var hp: int = get_stat("hp")
 		lbl.text = "%s\nHP:%d" % [display_name, hp]
+	elif has_node("Visual/Label"):
+		var lbl2: Label3D = $Visual/Label
+		var hp2: int = get_stat("hp")
+		lbl2.text = "%s\nHP:%d" % [display_name, hp2]

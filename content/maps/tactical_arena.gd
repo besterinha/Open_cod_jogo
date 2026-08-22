@@ -42,6 +42,10 @@ func _ready() -> void:
 		if hud.has_method("get_selected"):
 			selected_ability = hud.get_selected()
 
+	# VFX: escuta combat
+	combat.ability_used.connect(_on_ability_used)
+	combat.damage_applied.connect(_on_damage_applied)
+
 	# Conecta sinais
 	turn_manager.turn_started.connect(_on_turn_started)
 	turn_manager.battle_ended.connect(_on_battle_ended)
@@ -110,6 +114,7 @@ func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
 
 func _on_turn_started(unit: Unit) -> void:
 	selected_unit = unit
+	_update_turn_label(unit)
 	print("[Turn] Vez de %s (team %d) em %s" % [unit.display_name, unit.team, unit.cell])
 	# destaca alcance
 	_highlight_reachable(unit)
@@ -138,9 +143,81 @@ func _play_ai(unit: Unit) -> void:
 func _on_hud_ability_selected(abil: AbilityResource) -> void:
 	selected_ability = abil
 	print("[HUD] Habilidade selecionada touch: %s" % abil.nome)
+	if selected_unit:
+		_highlight_reachable(selected_unit)
+
+func _on_ability_used(user: Unit, abil: AbilityResource, cells: Array[Vector2i]) -> void:
+	_spawn_vfx(abil, cells)
+
+func _spawn_vfx(abil: AbilityResource, cells: Array[Vector2i]) -> void:
+	var scene: PackedScene = abil.vfx
+	if scene == null:
+		scene = preload("res://placeholders/vfx/vfx_circle.tscn")
+	for cell in cells:
+		var v: Node3D = scene.instantiate() as Node3D
+		v.position = board.grid.cell_to_world(cell) + Vector3(0, 0.15, 0)
+		# cor por tipo: dano vermelho, heal verde
+		if not abil.efeitos.is_empty():
+			var delta: int = int(abil.efeitos[0].get("delta", 0))
+			if delta > 0:
+				# heal = verde
+				var m: StandardMaterial3D = StandardMaterial3D.new()
+				m.albedo_color = Color(0.3, 1, 0.4, 0.6)
+				m.emission = Color(0.3, 1, 0.4)
+				m.emission_energy_multiplier = 2.0
+				m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				var mesh_node: MeshInstance3D = v as MeshInstance3D
+				if mesh_node:
+					mesh_node.material_override = m
+		$TacticalBoard.add_child(v)
+		var tw: Tween = create_tween()
+		tw.tween_property(v, "scale", Vector3(2, 2, 2), 0.4)
+		tw.parallel().tween_property(v, "position:y", v.position.y + 0.5, 0.4)
+		tw.tween_callback(func() -> void: v.queue_free())
+
+func _on_damage_applied(target: Unit, effects: Array[Dictionary]) -> void:
+	for eff in effects:
+		var sid: String = str(eff.get("stat_id", ""))
+		var delta: int = int(eff.get("delta", 0))
+		if sid == "hp":
+			_spawn_damage_number(target, delta)
+
+func _spawn_damage_number(unit: Unit, delta: int) -> void:
+	var lbl := Label3D.new()
+	lbl.text = ("%+d" % delta) if delta < 0 else ("+%d" % delta)
+	lbl.modulate = Color(1, 0.3, 0.3) if delta < 0 else Color(0.3, 1, 0.4)
+	lbl.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	lbl.font_size = 64
+	lbl.outline_size = 10
+	lbl.position = unit.position + Vector3(0, 1.8, 0)
+	add_child(lbl)
+	var tw: Tween = create_tween()
+	tw.tween_property(lbl, "position:y", lbl.position.y + 1.0, 0.8)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(func() -> void: lbl.queue_free())
 
 func _on_turn_changed(unit: Unit) -> void:
-	pass
+	_update_turn_label(unit)
+
+func _update_turn_label(unit: Unit) -> void:
+	var label: Label = get_node_or_null("CanvasLayer/TurnLabel") as Label
+	if label:
+		var round: int = turn_manager.current_round if turn_manager else 1
+		label.text = "Turno: %s (T%d) R%d" % [unit.display_name, unit.team, round]
+		label.modulate = Color(0.2, 0.6, 1) if unit.team == 0 else Color(1, 0.4, 0.4)
+	# destaca unidade ativa
+	for u in board.units:
+		var vis: Node = u.get_node_or_null("Visual")
+		if vis and vis is MeshInstance3D:
+			var mat: StandardMaterial3D = (vis as MeshInstance3D).material_override as StandardMaterial3D
+			if mat:
+				mat.emission_enabled = (u == unit)
+				if u == unit:
+					mat.emission = Color(1, 0.9, 0.3)
+					mat.emission_energy_multiplier = 1.5
+				else:
+					mat.emission = Color(0, 0, 0)
+					mat.emission_energy_multiplier = 0.0
 
 func _on_battle_ended(winner: int) -> void:
 	print("[Battle] Vitória do time %d!" % winner)
@@ -157,6 +234,8 @@ func _highlight_reachable(unit: Unit) -> void:
 	# limpa highlights antigos
 	for c in get_tree().get_nodes_in_group("highlight"):
 		c.queue_free()
+	for c in get_tree().get_nodes_in_group("highlight_abil"):
+		c.queue_free()
 	var reachable: Array[Vector2i] = movement.get_reachable(unit)
 	for cell in reachable:
 		var hl := MeshInstance3D.new()
@@ -169,13 +248,33 @@ func _highlight_reachable(unit: Unit) -> void:
 		hl.position = board.grid.cell_to_world(cell) + Vector3(0, 0.02, 0)
 		hl.add_to_group("highlight")
 		$TacticalBoard.add_child(hl)
+	# alcance da habilidade selecionada em azul
+	if selected_ability:
+		var abil_reach: Array[Vector2i] = board.grid.get_reachable(unit.cell, selected_ability.alcance, func(c: Vector2i) -> bool: return board.grid.is_within_bounds(c))
+		for cell in abil_reach:
+			if reachable.has(cell):
+				continue # já verde
+			var hl2 := MeshInstance3D.new()
+			hl2.mesh = BoxMesh.new()
+			(hl2.mesh as BoxMesh).size = Vector3(0.85, 0.04, 0.85)
+			var mat2 := StandardMaterial3D.new()
+			mat2.albedo_color = Color(0.3, 0.5, 1, 0.45)
+			mat2.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			hl2.material_override = mat2
+			hl2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.025, 0)
+			hl2.add_to_group("highlight_abil")
+			$TacticalBoard.add_child(hl2)
 
 func _unhandled_input(event: InputEvent) -> void:
 	var unit: Unit = turn_manager.get_current_unit()
 	if unit == null or unit.team != 0:
 		return # só player controla
 	if event is InputEventScreenTouch and event.pressed:
-		var cam: Camera3D = $Camera3D
+		var cam: Camera3D = get_node_or_null("CameraRig/Camera3D") as Camera3D
+		if cam == null:
+			cam = get_node_or_null("Camera3D") as Camera3D
+		if cam == null:
+			return
 		var from: Vector3 = cam.project_ray_origin(event.position)
 		var dir: Vector3 = cam.project_ray_normal(event.position)
 		if dir.y == 0:
@@ -186,17 +285,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not board.grid.is_within_bounds(cell):
 			return
 		print("[Input] Tap %s" % cell)
-		# se tem unidade inimiga na cell, ataca com habilidade selecionada (touch) ou fallback strike
+		# se tem unidade na cell, usa habilidade selecionada (permite curar aliado ou atacar inimigo)
 		var target_unit: Unit = board.get_unit_at(cell)
-		if target_unit and target_unit.team != unit.team:
+		if target_unit:
 			var abil: AbilityResource = selected_ability
 			if abil == null:
 				abil = load("res://data/abilities/strike.tres") as AbilityResource
+			# para heal (delta>0) permite aliado, para dano permite inimigo — MVE simples permite qualquer alvo
 			if combat.use_ability(unit, abil, cell):
 				print("[Combat Touch] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
 				turn_manager.end_turn()
 			else:
-				print("[Combat] Não pode usar %s em %s (alcance/custo)" % [abil.nome, cell])
+				print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [abil.nome, cell, abil.custo])
 		elif board.is_walkable(cell) or cell == unit.cell:
 			# tenta mover
 			if movement.can_move_to(unit, cell):

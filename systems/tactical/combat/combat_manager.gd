@@ -15,9 +15,11 @@ func setup(p_board: TacticalBoard, p_resolver: CombatResolver = null) -> void:
 	if p_resolver != null:
 		resolver = p_resolver
 	else:
-		# default: tenta carregar banner_saga como exemplo, se não existir usa base
-		if ResourceLoader.exists("res://gyms/resolvers/resolver_banner_saga.gd"):
-			resolver = load("res://gyms/resolvers/resolver_banner_saga.gd").new()
+		# MVE genérico: hp_only puro (sem Banner Saga)
+		if ResourceLoader.exists("res://systems/tactical/combat/resolvers/resolver_default.gd"):
+			resolver = load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
+		elif ResourceLoader.exists("res://gyms/resolvers/resolver_hp_only.gd"):
+			resolver = load("res://gyms/resolvers/resolver_hp_only.gd").new()
 		else:
 			resolver = CombatResolver.new()
 
@@ -80,7 +82,12 @@ func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) ->
 		db = reg.get_db()
 	for cell in area_cells:
 		var target: Unit = board.get_unit_at(cell)
-		if target == null or target == user:
+		if target == null:
+			continue
+		# permite curar a si mesmo (heal) mas não dano amigo? Para MVE genérico, permite tudo exceto curar inimigo com heal positivo?
+		# Simplificado MVE: permite qualquer alvo, resolver decide delta
+		if target == user and ability.efeitos.size() > 0 and int(ability.efeitos[0].get("delta", 0)) < 0:
+			# não se auto-dane com fireball/strike se mirar em si
 			continue
 		var result: Dictionary = resolver.resolve(user.stats, target.stats, ability, db)
 		var effects: Array[Dictionary] = result.get("effects", []) as Array[Dictionary]
