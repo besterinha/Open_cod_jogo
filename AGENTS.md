@@ -30,7 +30,8 @@ Fluxo de dependência: `content -> systems -> addons`, `ui -> systems`. CI bloqu
 - Placeholders em `placeholders/` (capsule/cube/circle) — swap por `Sprite3D` textura é só trocar referência no `.tres`.
 - 2.5D: cena `Node3D` + `Camera3D` ortogonal isométrica (45°), `Sprite3D` billboard para unidades.
 - Android: `touch tap` mover, `pinch` zoom, `long-press` info. Anchors para 720p–2K.
-- Validar antes de commit: `godot --headless --check-only` + `.editorconfig` (Tab/LF) + `godot-validation-flow` + `DataValidator` + `gut --headless -gexit` (CI falha se style != ok)
+- Validar antes de commit: `godot --headless --import` + `godot --headless --check-only` + `.editorconfig` (Tab/LF) + `godot-validation-flow` + `DataValidator` + `gut --headless -gexit` (CI falha se style/test != ok)
+- Testes obrigatórios por feature (70/25/5): `unit` (isolado, lógica pura `RefCounted`) + `contract` (DataValidator) + `integration` (completo `HUD+Combat+Board`/`Input+Combat`/`Caravana->Tático` com `watch_signals`) + `smoke` (`await process_frame`) + `regression` (`test_regression_bug_<id>`)
 - Commits: `feat:`, `fix:`, `docs:`, `chore:`. Gratuito apenas (sem asset pago).
 
 ## Comandos úteis
@@ -52,3 +53,4 @@ godot --headless --export-release "Android" build.apk
 - Sempre gratuito/MIT. Nada pago.
 - Toda nova habilidade/ação: criar em `gyms/` -> validar contrato -> mover para `data/` -> testes GUT + smoke -> CI bloqueia merge se falha.
 - Para IA gerar conteúdo: usar schema JSON documentado em `docs/TDD.md#schema-ia`.
+- Toda nova feature (habilidade, sistema, UI): testes `unit` (isolado, `new()` sem cena) + `integration` (completo `HUD+Combat+Board` com `watch_signals` e `await process_frame`) — CI bloqueia `contract/unit/integration/smoke` se falhar. Nunca só isolado.
