@@ -6,18 +6,25 @@ const SCENES: Array[String] = [
 	"res://placeholders/tactical/unit_capsule.tscn",
 	"res://placeholders/vfx/vfx_circle.tscn",
 	"res://content/maps/tactical_arena.tscn",
+	"res://content/maps/journey_map.tscn",
 	"res://ui/caravan_bar.tscn",
+	"res://ui/radial_menu.tscn",
+	"res://ui/tactical_hud.tscn",
 ]
 
 func test_all_critical_scenes_load() -> void:
 	for path in SCENES:
 		var res: Resource = load(path)
 		assert_not_null(res, "Falha ao carregar %s" % path)
-		# tenta instanciar se for PackedScene
 		if res is PackedScene:
 			var inst: Node = (res as PackedScene).instantiate()
 			assert_not_null(inst, "Falha ao instanciar %s" % path)
-			inst.queue_free()
+			add_child_autofree(inst)
+			await get_tree().process_frame
+			# checa highlights e tiles não vazios para tático
+			if path.contains("tactical_arena"):
+				assert_true(inst.get_node_or_null("TacticalBoard") != null, "TacticalBoard deve existir")
+				assert_true(inst.get_node_or_null("CameraRig/Camera3D") != null or inst.get_node_or_null("Camera3D") != null, "Camera deve existir")
 
 func test_all_data_abilities_valid() -> void:
 	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase

@@ -10,7 +10,7 @@ extends Resource
 @export var custo: Dictionary = {} # {stat_id: int} genérico — validado contra AttributeDatabase
 @export var alcance: int = 1
 @export var area: String = "single" # single, 3x3, cross, line — validado por DataValidator
-@export var efeitos: Array[Dictionary] = [] # [{"stat_id": "hp", "delta": -5, "element": "fire"}, ...] genérico
+@export var efeitos: Array = [] # [{"stat_id": "hp", "delta": -5}, ...] genérico (untyped para evitar cast Array[Dictionary])
 @export var tags_required: PackedStringArray = []
 @export var vfx: PackedScene
 @export var logic_script: GDScript # deve implementar IAbilityLogic interface

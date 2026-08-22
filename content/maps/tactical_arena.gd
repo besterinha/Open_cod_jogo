@@ -201,7 +201,7 @@ func _spawn_vfx(abil: AbilityResource, cells: Array[Vector2i]) -> void:
 		tw.parallel().tween_property(v, "position:y", v.position.y + 0.5, 0.4)
 		tw.tween_callback(func() -> void: v.queue_free())
 
-func _on_damage_applied(target: Unit, effects: Array[Dictionary]) -> void:
+func _on_damage_applied(target: Unit, effects: Array) -> void:
 	for eff in effects:
 		var sid: String = str(eff.get("stat_id", ""))
 		var delta: int = int(eff.get("delta", 0))

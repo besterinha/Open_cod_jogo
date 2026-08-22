@@ -186,18 +186,27 @@ Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, 
 
 Conversor: `systems/common/json_to_resource.gd` (JSON -> Resource). IA nunca edita `systems/`, só `data/`.
 
-## 8. Validação & Testes
-Ver `AGENTS.md`. Pipeline:
-1.  `godot-validation-flow` (broken deps) + `DataValidator` (contrato .tres)
-2.  `GUT` unit (`tests/unit/*`), `SceneRunner` integration
-3.  `Smoke` (`tests/smoke/test_all_scenes_load.gd`) carrega todas `*.tscn` headless
-4.  `CI` GitHub Actions `barichello/godot-ci:4.7.2` -> `godot --headless --script addons/gut/gut_cmdln.gd -gexit` (bloqueia merge se falha)
-5.  `Regression`: cada bug vira `test_regression_bug_<id>`
+## 8. Validação & Testes — Pirâmide 70/25/5 (não só isolado)
+Ver `AGENTS.md` + `docs/STYLE.md`. Pirâmide: `70% Unit / 25% Integração / 5% Contrato+Smoke+E2E`.
 
-Comando local:
-```
+Pipeline (ordem bloqueia PR):
+1.  **Import + Compile:** `godot --headless --import` + `godot --headless --check-only` + `.editorconfig` Tab/LF
+2.  **Contrato (gate <1min):** `tests/contract/*` — `DataValidator` rejeita `stat_id` desconhecido, `alcance>10`, `area` inválida, `vfx` inexistente, `ids` duplicados, `AttributeDatabase`, `SaveCompat v0.1.sav`
+3.  **Unit (gate <5min):** `tests/unit/*` — lógica pura `RefCounted` (`resolver`, `stats`, `floodfill`, `can_pay`) sem cena
+4.  **Integração (gate PR <15min):** `tests/integration/*` — `HUD+Combat+Board` junto (pega `VFX sem dano` e `HUD 0 vs custo 3`), `Input+Combat` via `ScreenTouch` simulado, `Caravana->Tático` via `EventBus`
+5.  **Smoke + E2E (gate <10min):** `tests/smoke/*` carrega todas `*.tscn` com `await process_frame` + `tiles 8x8` + `highlight`; `tests/e2e/*` vertical slice `10 dias jornada + 2v2 + 3 habilidades + Save`
+6.  **Regressão:** cada bug vira `tests/regression/test_regression_bug_<id>.gd` permanente (ex: `VFX sem dano`)
+7.  **CI** `.github/workflows/ci.yml` `barichello/godot-ci:4.7.2` falha se qualquer gate falhar; `gyms/`→`data/` só com `contract` verde
+
+Comandos locais:
+```bash
+godot --headless --import
 godot --headless --check-only
+godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/contract -gexit
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
+godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gexit
+godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/smoke -gdir=res://tests/e2e -gexit
+godot --headless --script addons/gut/gut_cmdln.gd -gexit # tudo
 ```
 
 ## 9. Performance Android

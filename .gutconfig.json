@@ -1,5 +1,5 @@
 {
-	"dirs": ["res://tests/unit", "res://tests/smoke"],
+	"dirs": ["res://tests/unit", "res://tests/contract", "res://tests/integration", "res://tests/smoke", "res://tests/regression", "res://tests/e2e"],
 	"should_exit": true,
 	"should_exit_on_success": true,
 	"inner_class_prefix": "Test",

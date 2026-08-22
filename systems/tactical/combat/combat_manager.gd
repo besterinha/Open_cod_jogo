@@ -8,7 +8,7 @@ var resolver: CombatResolver
 var stats_registry: Node # StatsRegistry autoload opcional
 
 signal ability_used(user: Unit, ability: AbilityResource, targets: Array[Vector2i])
-signal damage_applied(target: Unit, effects: Array[Dictionary])
+signal damage_applied(target: Unit, effects: Array)
 
 func setup(p_board: TacticalBoard, p_resolver: CombatResolver = null) -> void:
 	board = p_board
@@ -90,7 +90,7 @@ func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) ->
 			# não se auto-dane com fireball/strike se mirar em si
 			continue
 		var result: Dictionary = resolver.resolve(user.stats, target.stats, ability, db)
-		var effects: Array[Dictionary] = result.get("effects", []) as Array[Dictionary]
+		var effects: Array = result.get("effects", [])
 		for eff in effects:
 			var sid: String = str(eff.get("stat_id", ""))
 			var delta: int = int(eff.get("delta", 0))

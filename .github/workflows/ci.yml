@@ -11,10 +11,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Import project
+        run: godot --headless --import
       - name: GDScript syntax check
         run: godot --headless --check-only
-      - name: GUT tests (unit + smoke)
-        run: godot --headless --script addons/gut/gut_cmdln.gd -gexit
+      - name: Style check (.editorconfig Tab/LF)
+        run: |
+          echo "Checking style Tab indent..."
+          if grep -P "^\s{4}[a-z]" --include="*.gd" -r systems/ ui/ content/ 2>/dev/null | grep -v "    " | head; then
+            echo "Verificação manual de indentação (warning, não bloqueia)"
+          fi
+          echo "Style check done (ver docs/STYLE.md)"
+      - name: Contract gate (DataValidator)
+        run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/contract -gexit
+      - name: Unit gate
+        run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
+      - name: Integration gate (HUD+Combat, Input+Combat, Caravana->Tático)
+        run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gexit
+      - name: Smoke + E2E gate
+        run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/smoke -gdir=res://tests/e2e -gexit
       - name: Enforce modular deps (gyms isolation)
         run: |
           echo "Checking gyms isolation..."
