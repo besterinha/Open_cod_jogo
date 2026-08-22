@@ -19,7 +19,20 @@
   },
   "instructions": ["AGENTS.md", "docs/GDD.md", "docs/TDD.md"],
   "permission": {
+    "read": "allow",
     "edit": "allow",
-    "bash": "allow"
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "bash": "allow",
+    "task": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": "allow",
+    "question": "allow",
+    "todowrite": "allow",
+    "external_directory": "allow",
+    "doom_loop": "allow",
+    "lsp": "allow"
   }
 }
