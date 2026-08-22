@@ -22,6 +22,8 @@ func _ready() -> void:
 	print("[Journey] Dia %d | Supplies %d | Morale %s | Renown %d | Rate 1:%d" % [caravan.day, caravan.supplies, caravan.get_morale_state(), caravan.renown, market.current_rate])
 	# conecta sinais para log
 	travel.travel_day_completed.connect(_on_day)
+	travel.travel_finished.connect(_on_travel_finished)
+	EventBus.battle_requested.connect(_on_battle_requested)
 
 func _on_day(day: int) -> void:
 	print("[Journey] Dia %d completo. Supplies %d Morale %d" % [day, caravan.supplies, caravan.morale])
@@ -31,6 +33,16 @@ func _on_day(day: int) -> void:
 		# aplica primeira escolha para teste
 		if not ev.get("escolhas").is_empty():
 			event_system.apply_choice(ev, 0)
+
+func _on_travel_finished(_days: int) -> void:
+	# 15% chance de batalha ao terminar viagem
+	if randf() < 0.15:
+		print("[Journey] Emboscada! Indo para combate...")
+		EventBus.battle_requested.emit("ambush")
+
+func _on_battle_requested(_id: String) -> void:
+	print("[Journey] Transição para Tático: %s" % _id)
+	get_tree().change_scene_to_file("res://content/maps/tactical_arena.tscn")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
@@ -46,6 +58,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				var ev: Resource = event_system.roll_random()
 				if ev:
 					print("[Event Manual] %s" % ev.get("titulo"))
+			KEY_B:
+				EventBus.battle_requested.emit("debug_battle")
 
 func _process(delta: float) -> void:
 	# side-scroll visual placeholder

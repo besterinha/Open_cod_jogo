@@ -1,11 +1,32 @@
-[gd_scene load_steps=5 format=3 uid="uid://t4ct1c4l4r3n4"]
+[gd_scene load_steps=8 format=3 uid="uid://t4ct1c4l4r3n4"]
 
-[ext_resource type="PackedScene" uid="uid://t1l3cub3t1l3cu" path="res://placeholders/tactical/tile_cube.tscn" id="1_tile"]
-[ext_resource type="PackedScene" uid="uid://un1tc4psun1tc4" path="res://placeholders/tactical/unit_capsule.tscn" id="2_unit"]
-[ext_resource type="Script" path="res://content/maps/tactical_arena.gd" id="3_script"]
+[ext_resource type="Script" path="res://content/maps/tactical_arena.gd" id="1_script"]
+[ext_resource type="Script" path="res://systems/tactical/tactical_board.gd" id="2_board"]
+[ext_resource type="Script" path="res://systems/tactical/turn/team_round_robin.gd" id="3_turn"]
+[ext_resource type="Script" path="res://systems/tactical/movement/movement_system.gd" id="4_move"]
+[ext_resource type="Script" path="res://systems/tactical/combat/combat_manager.gd" id="5_combat"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_grid"]
+size = Vector3(0.9, 0.05, 0.9)
 
 [node name="TacticalArena" type="Node3D"]
-script = ExtResource("3_script")
+script = ExtResource("1_script")
+
+[node name="TacticalBoard" type="Node3D" parent="."]
+script = ExtResource("2_board")
+grid_size = Vector2i(8, 8)
+cell_size = 1.0
+
+[node name="Tiles" type="Node3D" parent="TacticalBoard"]
+
+[node name="TurnManager" type="Node" parent="."]
+script = ExtResource("3_turn")
+
+[node name="MovementSystem" type="Node" parent="."]
+script = ExtResource("4_move")
+
+[node name="CombatManager" type="Node" parent="."]
+script = ExtResource("5_combat")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 4, 6, 4)
@@ -13,14 +34,22 @@ projection = 1
 size = 10.0
 current = true
 
-[node name="Grid" type="Node3D" parent="."]
-
-[node name="UnitHero" parent="Grid" instance=ExtResource("2_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0.5)
-
-[node name="UnitEnemy" parent="Grid" instance=ExtResource("2_unit")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, 6.5)
-
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.5, -0.866025, 0, 0, 0, -1, 0.866025, 0.5, 0, 0, 5, 0)
 shadow_enabled = false
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HelpLabel" type="Label" parent="CanvasLayer"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 700.0
+offset_bottom = 60.0
+text = "Tático 2.5D Genérico | Tap: mover/atacar | [Espaço] Passar turno | [J] Voltar Jornada"
+
+[node name="TurnLabel" type="Label" parent="CanvasLayer"]
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 700.0
+offset_bottom = 90.0
+text = "Turno: -"

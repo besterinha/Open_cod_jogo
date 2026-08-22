@@ -21,6 +21,7 @@ boot_splash/bg_color=Color(0.141176, 0.141176, 0.141176, 1)
 EventBus="*res://systems/common/event_bus.gd"
 Registry="*res://systems/common/registry.gd"
 SaveSystem="*res://systems/common/save_system.gd"
+StatsRegistry="*res://systems/stats/stats_registry.gd"
 
 [display]
 
