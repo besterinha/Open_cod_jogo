@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityResource" load_steps=2 format=3 uid="uid://h3al7h3al7h3al7"]
+
+[ext_resource type="Script" path="res://systems/ability/ability_resource.gd" id="1_ccc"]
+[ext_resource type="Script" path="res://systems/ability/logics/area_damage.gd" id="2_ddd"]
+
+[resource]
+script = ExtResource("1_ccc")
+id = "heal"
+nome = "Cura"
+custo = {
+"willpower": 1
+}
+alcance = 3
+area = "single"
+logic_script = ExtResource("2_ddd")

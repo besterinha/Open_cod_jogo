@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="AbilityResource" load_steps=2 format=3 uid="uid://str1k3str1k3str"]
+
+[ext_resource type="Script" path="res://systems/ability/ability_resource.gd" id="1_eee"]
+[ext_resource type="Script" path="res://systems/ability/logics/area_damage.gd" id="2_fff"]
+
+[resource]
+script = ExtResource("1_eee")
+id = "strike"
+nome = "Golpe"
+custo = {
+"willpower": 0
+}
+alcance = 1
+area = "single"
+logic_script = ExtResource("2_fff")

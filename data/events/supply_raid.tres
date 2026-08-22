@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EventResource" load_steps=3 format=3 uid="uid://3v3nt5upp1yr41d"]
+
+[ext_resource type="Script" path="res://systems/caravan/event_resource.gd" id="1_ggg"]
+[ext_resource type="Script" path="res://systems/caravan/event_choice.gd" id="2_hhh"]
+
+[sub_resource type="Resource" id="choice_1"]
+script = ExtResource("2_hhh")
+label = "Lutar"
+cost = {
+}
+reward = {
+"renown": 5,
+"morale": 5
+}
+
+[sub_resource type="Resource" id="choice_2"]
+script = ExtResource("2_hhh")
+label = "Entregar suprimentos"
+cost = {
+"supplies": 20
+}
+reward = {
+"morale": -10
+}
+
+[resource]
+script = ExtResource("1_ggg")
+id = "supply_raid"
+weight = 15
+trigger = "random"
+titulo = "Saqueadores na estrada"
+texto = "Bandidos pedem 2 carroças de suprimentos ou haverá luta."
+escolhas = Array[Resource]([SubResource("choice_1"), SubResource("choice_2")])

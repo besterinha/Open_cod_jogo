@@ -1,0 +1,38 @@
+# Godot 4.7.2
+.godot/
+export/
+export.cfg
+export_presets.cfg
+
+# Android build template (gerado, mas pode versionar se quiser)
+# Descomente para ignorar:
+# android/build/
+# android/
+
+# Import cache
+*.import
+*.translation
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Mono/C# (se usar .NET futuro, mas projeto é Standard)
+.mono/
+data_*/
+mono_crash.*
+
+# Gyms são versionados mas ignorados no build - não ignorar aqui, só no export
+# Para ignorar builds locais de teste:
+build/
+*.apk
+*.aab
+
+# MCP / Node
+node_modules/
+.mcp/
+
+# OpenCode cache
+.opencode/cache/

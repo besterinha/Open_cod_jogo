@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="VFProjectValidationConfig" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://addons/godot_validation_flow/core/project_validation_config.gd" id="1"]
+[ext_resource type="Resource" path="res://validators/profiles/full_project.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+active_profile = ExtResource("2")
+missing_dependencies = true
+broken_uid = true
+duplicate_uid = true
+uid_mismatch = true
+export_integrity = true
+export_coverage = true
+orphan_assets = false
+duplicate_basename = false
+autoload_paths = true
+empty_node_paths = true
+configuration_warnings = true
+script_hooks = true
+filename_substring_enabled = true
+filename_substring_text = "broken_"
+filename_substring_extensions = PackedStringArray("tscn")
+filename_substring_severity = 0
+script_hooks_severity = 1
+csharp_attributes = true
+block_play_on_issues = false
+play_gate_severity = 1
+block_export_on_issues = false
+export_gate_severity = 1
+write_json_report = true
+json_report_path = "res://.godot/validation_report.json"
+write_html_report = true

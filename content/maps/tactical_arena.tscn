@@ -1,0 +1,26 @@
+[gd_scene load_steps=5 format=3 uid="uid://t4ct1c4l4r3n4"]
+
+[ext_resource type="PackedScene" uid="uid://t1l3cub3t1l3cu" path="res://placeholders/tactical/tile_cube.tscn" id="1_tile"]
+[ext_resource type="PackedScene" uid="uid://un1tc4psun1tc4" path="res://placeholders/tactical/unit_capsule.tscn" id="2_unit"]
+[ext_resource type="Script" path="res://content/maps/tactical_arena.gd" id="3_script"]
+
+[node name="TacticalArena" type="Node3D"]
+script = ExtResource("3_script")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 4, 6, 4)
+projection = 1
+size = 10.0
+current = true
+
+[node name="Grid" type="Node3D" parent="."]
+
+[node name="UnitHero" parent="Grid" instance=ExtResource("2_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0.5)
+
+[node name="UnitEnemy" parent="Grid" instance=ExtResource("2_unit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, 6.5)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.5, -0.866025, 0, 0, 0, -1, 0.866025, 0.5, 0, 0, 5, 0)
+shadow_enabled = false

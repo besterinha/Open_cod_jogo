@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="VFValidationProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/godot_validation_flow/core/validation_profile.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Full Project"
+include_prefixes = PackedStringArray("res://")
+exclude_prefixes = PackedStringArray()
+skip_addons = true

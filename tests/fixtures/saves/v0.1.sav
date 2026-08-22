@@ -1,0 +1,12 @@
+{
+	"day": 1,
+	"supplies": 30,
+	"morale": 50,
+	"renown": 0,
+	"pop": {
+		"clansmen": 100,
+		"fighters": 30,
+		"varl": 10,
+		"heroes": []
+	}
+}

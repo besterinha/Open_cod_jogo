@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://t1l3cub3t1l3cu"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_333"]
+size = Vector3(0.9, 0.1, 0.9)
+material = null
+
+[node name="TileCube" type="MeshInstance3D"]
+mesh = SubResource("BoxMesh_333")

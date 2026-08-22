@@ -1,0 +1,8 @@
+{
+	"dirs": ["res://tests/unit", "res://tests/smoke"],
+	"should_exit": true,
+	"should_exit_on_success": true,
+	"inner_class_prefix": "Test",
+	"log_level": 1,
+	"double_strategy": "SCRIPT_ONLY"
+}

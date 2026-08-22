@@ -1,0 +1,25 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "godot": {
+      "type": "local",
+      "command": ["npx", "-y", "@coding-solo/godot-mcp"],
+      "enabled": true
+    },
+    "godot-docs": {
+      "type": "local",
+      "command": ["npx", "-y", "@nuskey8/godot-docs-mcp"],
+      "enabled": true
+    },
+    "context7": {
+      "type": "local",
+      "command": ["npx", "-y", "context7", "serve"],
+      "enabled": true
+    }
+  },
+  "instructions": ["AGENTS.md", "docs/GDD.md", "docs/TDD.md"],
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  }
+}

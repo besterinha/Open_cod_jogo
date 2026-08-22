@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="AbilityResource" load_steps=2 format=3 uid="uid://cxy5d5d5d5d5d"]
+
+[ext_resource type="Script" path="res://systems/ability/ability_resource.gd" id="1_aaa"]
+[ext_resource type="Script" path="res://systems/ability/logics/area_damage.gd" id="2_bbb"]
+
+[resource]
+script = ExtResource("1_aaa")
+id = "fireball"
+nome = "Bola de Fogo"
+custo = {
+"willpower": 2,
+"renown": 0
+}
+alcance = 5
+area = "3x3"
+tags_required = PackedStringArray()
+logic_script = ExtResource("2_bbb")

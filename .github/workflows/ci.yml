@@ -1,0 +1,37 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.7.2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - name: GDScript syntax check
+        run: godot --headless --check-only
+      - name: GUT tests (unit + smoke)
+        run: godot --headless --script addons/gut/gut_cmdln.gd -gexit
+      - name: Enforce modular deps (gyms isolation)
+        run: |
+          echo "Checking gyms isolation..."
+          if grep -r "gyms/" --include="*.gd" addons/ systems/ ui/ 2>/dev/null; then
+            echo "ERRO: addons/systems/ui não podem referenciar gyms/"
+            exit 1
+          fi
+          echo "OK: gyms isolado"
+
+  export-android:
+    runs-on: ubuntu-latest
+    needs: validate
+    container:
+      image: barichello/godot-ci:4.7.2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export Android debug (dry-run)
+        run: |
+          mkdir -p build
+          godot --headless --export-debug "Android" build/debug.apk || echo "Export preset ainda não configurado (ok para MVP)"

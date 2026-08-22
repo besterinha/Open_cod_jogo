@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://vfxc1rclevfxc1r"]
+
+[ext_resource type="Material" uid="uid://c2vxyyxdyrqed" path="res://placeholders/vfx/vfx_circle_material.tres" id="1_111"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_222"]
+radius = 0.5
+height = 1.0
+material = ExtResource("1_111")
+
+[node name="VFXCircle" type="MeshInstance3D"]
+mesh = SubResource("SphereMesh_222")
