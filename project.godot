@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 name="Open_cod_jogo"
-run/main_scene="res://content/maps/tactical_arena.tscn"
+run/main_scene="res://content/maps/journey_map.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 boot_splash/bg_color=Color(0.141176, 0.141176, 0.141176, 1)

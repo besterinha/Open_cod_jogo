@@ -1,0 +1,67 @@
+[gd_scene load_steps=8 format=3 uid="uid://j0urn3ym4pj0urn3y"]
+
+[ext_resource type="Script" path="res://content/maps/journey_map.gd" id="1_journey"]
+[ext_resource type="Script" path="res://systems/caravan/caravan_manager.gd" id="2_caravan"]
+[ext_resource type="Script" path="res://systems/caravan/travel_system.gd" id="3_travel"]
+[ext_resource type="Script" path="res://systems/caravan/camp_system.gd" id="4_camp"]
+[ext_resource type="Script" path="res://systems/caravan/market_system.gd" id="5_market"]
+[ext_resource type="Script" path="res://systems/caravan/event_system.gd" id="6_event"]
+[ext_resource type="PackedScene" uid="uid://c4r4v4nb4rc4r4v" path="res://ui/caravan_bar.tscn" id="7_bar"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_road"]
+size = Vector3(20, 0.1, 4)
+
+[node name="JourneyMap" type="Node3D"]
+script = ExtResource("1_journey")
+
+[node name="CaravanManager" type="Node" parent="."]
+script = ExtResource("2_caravan")
+
+[node name="TravelSystem" type="Node" parent="."]
+script = ExtResource("3_travel")
+
+[node name="CampSystem" type="Node" parent="."]
+script = ExtResource("4_camp")
+
+[node name="MarketSystem" type="Node" parent="."]
+script = ExtResource("5_market")
+
+[node name="EventSystem" type="Node" parent="."]
+script = ExtResource("6_event")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 8, 10)
+projection = 1
+size = 8.0
+current = true
+
+[node name="Road" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("BoxMesh_road")
+
+[node name="CaravanVisual" type="Node3D" parent="."]
+
+[node name="Wagon1" type="MeshInstance3D" parent="CaravanVisual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_road")
+
+[node name="Wagon2" type="MeshInstance3D" parent="CaravanVisual"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0.5)
+mesh = SubResource("BoxMesh_road")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.5, -0.866025, 0, 0, 0, -1, 0.866025, 0.5, 0, 0, 5, 0)
+shadow_enabled = false
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="CaravanBar" parent="CanvasLayer" instance=ExtResource("7_bar")]
+offset_top = 10.0
+offset_bottom = 50.0
+
+[node name="HelpLabel" type="Label" parent="CanvasLayer"]
+offset_left = 20.0
+offset_top = 60.0
+offset_right = 700.0
+offset_bottom = 120.0
+text = "[T] Viajar 1 dia  [R] Descansar  [M] Mercado (1 Renown->Supplies)  [E] Evento"

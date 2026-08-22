@@ -3,6 +3,7 @@ extends GutTest
 
 func test_consume_day() -> void:
 	var c := CaravanManager.new()
+	add_child_autofree(c)
 	c.supplies = 10
 	c.morale = 50
 	c.consume_day()
@@ -12,6 +13,7 @@ func test_consume_day() -> void:
 
 func test_rest_day_recovers_morale() -> void:
 	var c := CaravanManager.new()
+	add_child_autofree(c)
 	c.supplies = 10
 	c.morale = 40
 	c.rest_day()
@@ -20,6 +22,7 @@ func test_rest_day_recovers_morale() -> void:
 
 func test_rest_without_supplies_no_morale() -> void:
 	var c := CaravanManager.new()
+	add_child_autofree(c)
 	c.supplies = 0
 	c.morale = 40
 	c.rest_day()
@@ -27,6 +30,7 @@ func test_rest_without_supplies_no_morale() -> void:
 
 func test_morale_state() -> void:
 	var c := CaravanManager.new()
+	add_child_autofree(c)
 	c.morale = 10
 	assert_eq(c.get_morale_state(), "miserable")
 	c.morale = 90

@@ -34,5 +34,8 @@ build/
 node_modules/
 .mcp/
 
+# Godot 4.7 UIDs (gerados automaticamente, opcionais no VCS)
+*.uid
+
 # OpenCode cache
 .opencode/cache/
