@@ -8,8 +8,11 @@ script = ExtResource("1_eee")
 id = "strike"
 nome = "Golpe"
 custo = {
-"willpower": 0
 }
 alcance = 1
 area = "single"
+efeitos = [{
+"stat_id": "hp",
+"delta": -4
+}]
 logic_script = ExtResource("2_fff")

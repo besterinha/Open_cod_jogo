@@ -1,7 +1,7 @@
 # GDD — Open_cod_jogo | TRPG Tático 2.5D + Caravana (One-Page + Detalhamento)
 
 **Versão:** 0.1.0 | **Data:** 22/08/2026 | **Engine:** Godot 4.7.2-stable | **Plataforma:** Android (720p–2K, Offline)
-**Inspiração:** The Banner Saga | **Estado:** Pré-produção, modular plugável
+**Inspiração:** The Banner Saga (referência, não contrato) | **Estado:** Pré-produção, modular plugável genérico
 
 ---
 
@@ -9,9 +9,9 @@
 Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/Renown) que alimenta combates táticos 2.5D por turnos — cada magia/evento é um dado plugável que IA pode gerar sem tocar no código.
 
 ## 2. Pillars (3)
-1.  **Caravana = Coração** — Decisões difíceis na estrada têm custo real no combate (moral baixa = willpower menor).
-2.  **Tático Legível** — Grid quadrado 2.5D isométrico, Armor vs Strength, posicionamento > DPS. Touch preciso.
-3.  **Plugável = Longevidade** — Habilidades/eventos são `.tres`/JSON, não código hardcoded. Criar conteúdo não quebra Core.
+1.  **Caravana = Coração** — Decisões difíceis na estrada têm custo real no combate (ex: moral baixa → penalidade plugável, ex: Banner Saga usa -willpower, mas fórmula é configurável).
+2.  **Tático Legível** — Grid quadrado 2.5D isométrico, posicionamento > DPS. **Stats 100% genéricos data-driven** (`data/stats/*.tres`) — você define quais atributos existem (HP, Armor, Shield, Mana, etc.), motor não trava. Touch preciso.
+3.  **Plugável = Longevidade** — Habilidades/eventos/stats são `.tres`/JSON, não código hardcoded. Resolver de combate plugável (`ICombatResolver`): Banner Saga `Armor vs Strength` é só 1 dos 3 exemplos em `gyms/`. Criar conteúdo não quebra Core.
 
 ## 3. Core Loop
 ```
@@ -22,20 +22,25 @@ Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/R
 [COMBATE TÁTICO] Grid 8x8 2.5D -> Turnos TeamRoundRobin (ou Initiative plugável) -> Mover (A* floodfill) + Ação (AbilityResource) -> Win/Lose -> volta para Jornada com Renown + loot
 ```
 
-## 4. Caravana — Sistema (Banner Saga-like)
-- **População:** `Clansmen` (não lutam, geram supplies via forrageamento), `Fighters` (auto-batalhas), `Varl` (tank, forte), `Heroes` (roster jogável no tático).
-- **Recursos:**
-  - `Supplies` — comida/dias. `fórmula default simples: 1 Supplies = 1 dia` (plugável para `1/100 pessoas/dia` banner saga exata via `ICaravanResourceSystem`). Falta de supplies = -Morale/dia, perda de pop.
-  - `Morale` — 5 estados: `Miserable / Low / Normal / Good / Great`. Afeta `Willpower` no combate (-2/+2). Viagem -10/dia, descanso +10/dia se bem provisionado, eventos +-5..25.
-  - `Renown` — moeda + XP. Ganho em combate/eventos. Troca por Supplies no mercado (taxa `1:X`) ou upa heróis. Sem Renown = sem progressão.
-- **Mapa:** 1D linear nodal (cidades conectadas) com caravana visual side-scrolling (sprites placeholder deslizando). Futuro: mapa 2D plugável.
+## 4. Caravana — Sistema (Genérico, exemplo Banner Saga)
+- **População:** `Clansmen` (não lutam, geram supplies), `Fighters` (auto-batalhas), `Varl` (tank) — nomes exemplo, você pode renomear via `data/classes/*.tres`, `Heroes` (roster jogável).
+- **Recursos (genéricos plugáveis):**
+  - `Supplies` — comida/dias. `fórmula default simples: 1 Supplies = 1 dia` (plugável via `ICaravanResourceSystem`; exemplo Banner Saga `ceil(pop/100)/dia` é só 1 implementação). Falta = -Morale/dia.
+  - `Morale` — 5 estados `Miserable..Great` **exemplo**. Você pode redefinir estados/efeitos via `data/stats/morale.tres`. Efeito no combate é plugável (ex: Banner Saga -willpower, mas pode ser -dano, -movimento, ou nada — configurável em `ICombatResolver`).
+  - `Renown` — moeda + XP exemplo. Pode ser separado em `Gold + XP` ou outro recurso via `data/stats/caravan_resources.tres`.
+- **Mapa:** 1D linear nodal (exemplo), caravana side-scrolling placeholder. 2D plugável futuro.
 
-## 5. Combate Tático — Sistema
-- **Grid:** Quadrado 2.5D isométrico fixo (45°, câmera ortogonal `Node3D`), `Cell = Vector2i`, `cell_size = 1.0` mundo. Hex plugável via `IGridSystem`.
-- **Turnos:** `TeamRoundRobin` default (time todo age), alternativa `Initiative (Agilidade)` plugável via `ITurnSystem`.
-- **Stats Core (por unidade):** `Strength (HP + ATK)`, `Armor (buffer), Willpower (recurso para habilidades, afetado por Morale)`, `Movement`. Dano = `max(0, ATK - Armor_alvo)` simplificado, `Armor break` primeiro é ótimo.
-- **Habilidades:** Toda ação é `AbilityResource` (Strategy): `nome, custo {willpower, renown}, alcance, area (Single/3x3/Cross/Line), efeitos [Damage, Heal, Status], vfx: PackedScene, logic_script: GDScript`. Área via `floodfill` no `GridSystem`.
-- **IA Inimiga:** `IAIBehavior` plugável: `Agressive (foca Strength baixa), Defensive, Support`. Gera `Intent` não executa direto.
+## 5. Combate Tático — Sistema (Genérico 100%)
+- **Grid:** Quadrado 2.5D isométrico fixo (45°, câmera ortogonal `Node3D`), `Cell = Vector2i`, `cell_size = 1.0`. Hex plugável via `IGridSystem`.
+- **Turnos:** `TeamRoundRobin` default (exemplo), plugável via `ITurnSystem` — você escolhe `Initiative`, `Speed-based`, etc. via `data/config/turn.tres`.
+- **Stats Core — 100% data-driven (`data/stats/attributes.tres`):** Você define quais atributos existem. Exemplo default: `hp, armor, willpower, movement` (Banner Saga-like), mas pode ser `hp, shield, mana, stamina` ou `vida, defesa, foco` — **motor não trava**. Cada unidade tem `UnitStats: Dictionary[stat_id -> int]` validado contra a definição. Sem hardcode `Strength/Armor`.
+- **Resolver Plugável (`ICombatResolver`):** Fórmula de dano é um `GDScript` Strategy. 3 exemplos já em `gyms/`:
+  - `resolver_banner_saga.gd`: `dano = max(0, atk - armor)` (exemplo)
+  - `resolver_hp_only.gd`: `dano = atk` puro (exemplo)
+  - `resolver_shield.gd`: escudo absorve primeiro (exemplo)
+  Você registra qual usar no `Registry` — trocar é 1 linha, sem tocar em `AbilityResource`.
+- **Habilidades:** `AbilityResource`: `nome, custo {stat_id: valor}` (genérico, não só willpower), `alcance, area, efeitos [Resource genérico], vfx, logic_script`. Área via `floodfill`.
+- **IA Inimiga:** `IAIBehavior` plugável genérica (`Agressive` exemplo foca `hp` baixo — stat id configurável).
 
 ## 6. Progressão & Conteúdo Plugável
 - Herói sobe nível com Renown, desbloqueia `Tags` que liberam habilidades (`grant_tags_required`).

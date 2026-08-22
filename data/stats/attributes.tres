@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="AttributeDatabase" load_steps=7 format=3 uid="uid://4ttr1but3d4t4b4s"]
+
+[ext_resource type="Script" path="res://systems/stats/attribute_database.gd" id="1_db"]
+[ext_resource type="Script" path="res://systems/stats/attribute_definition.gd" id="2_def"]
+
+[sub_resource type="Resource" id="attr_hp"]
+script = ExtResource("2_def")
+id = "hp"
+nome = "Vida"
+default_value = 10
+min_value = 0
+max_value = 99
+is_resource = false
+descricao = "Se chegar a 0, unidade cai (genérico)"
+
+[sub_resource type="Resource" id="attr_armor"]
+script = ExtResource("2_def")
+id = "armor"
+nome = "Armadura"
+default_value = 5
+min_value = 0
+max_value = 20
+is_resource = false
+descricao = "Exemplo Banner Saga — pode remover se não quiser"
+
+[sub_resource type="Resource" id="attr_willpower"]
+script = ExtResource("2_def")
+id = "willpower"
+nome = "Vontade"
+default_value = 3
+min_value = 0
+max_value = 10
+is_resource = true
+descricao = "Recurso para habilidades (exemplo)"
+
+[sub_resource type="Resource" id="attr_movement"]
+script = ExtResource("2_def")
+id = "movement"
+nome = "Movimento"
+default_value = 4
+min_value = 1
+max_value = 10
+is_resource = false
+descricao = "Alcance de movimento em cells"
+
+[resource]
+script = ExtResource("1_db")
+attributes = Array[Resource]([SubResource("attr_hp"), SubResource("attr_armor"), SubResource("attr_willpower"), SubResource("attr_movement")])

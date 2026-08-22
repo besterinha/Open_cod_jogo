@@ -20,6 +20,8 @@ func test_all_critical_scenes_load() -> void:
 			inst.queue_free()
 
 func test_all_data_abilities_valid() -> void:
+	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
+	assert_not_null(db)
 	var abilities: Array[String] = [
 		"res://data/abilities/fireball.tres",
 		"res://data/abilities/heal.tres",
@@ -28,5 +30,5 @@ func test_all_data_abilities_valid() -> void:
 	for p in abilities:
 		var a: Resource = load(p)
 		assert_not_null(a, "Ability não encontrada: %s" % p)
-		var errs: Array[String] = DataValidator.validate_ability(a)
+		var errs: Array[String] = DataValidator.validate_ability(a, db)
 		assert_eq(errs.size(), 0, "%s inválido: %s" % [p, ", ".join(errs)])

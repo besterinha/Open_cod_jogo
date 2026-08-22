@@ -1,15 +1,16 @@
 extends Resource
 class_name AbilityResource
-# Resource plugável para qualquer habilidade/magia/ação.
+# Resource plugável GENÉRICO para qualquer habilidade/magia/ação.
+# Custo e efeitos referenciam stat_id definidos em data/stats/*.tres — motor não trava em willpower/renown.
+# Ex: {"mana": 3, "stamina":1} ou {"hp": -5} se quiser custo em vida.
 # Toda magia é um .tres que referencia logic_script (Strategy) + vfx placeholder.
-# IA gera .tres, nunca edita systems/.
 
 @export var id: String = ""
 @export var nome: String = ""
-@export var custo: Dictionary = {"willpower": 1, "renown": 0}
+@export var custo: Dictionary = {} # {stat_id: int} genérico — validado contra AttributeDatabase
 @export var alcance: int = 1
 @export var area: String = "single" # single, 3x3, cross, line — validado por DataValidator
-@export var efeitos: Array[Resource] = [] # DamageEffect, HealEffect, etc (futuro)
+@export var efeitos: Array[Dictionary] = [] # [{"stat_id": "hp", "delta": -5, "element": "fire"}, ...] genérico
 @export var tags_required: PackedStringArray = []
 @export var vfx: PackedScene
 @export var logic_script: GDScript # deve implementar IAbilityLogic interface

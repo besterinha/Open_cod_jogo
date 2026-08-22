@@ -5,7 +5,7 @@
 ---
 
 ## 1. Overview
-Construir TRPG tático 2.5D + Caravana modular plugável onde conteúdo (habilidades/eventos) é dado, não código. Dois layers: `Caravan` (gestão recursos + eventos) e `Tactical` (grid + turnos + combat). Crítico: `content -> systems -> addons` unidirecional, validável por IA.
+Construir TRPG tático 2.5D + Caravana modular plugável **genérico** onde conteúdo (habilidades/eventos/**stats**) é dado, não código. Dois layers: `Caravan` e `Tactical`. Stats 100% data-driven (`data/stats/`), resolvers plugáveis. Banner Saga é **exemplo inspiração, não contrato**. Crítico: `content -> systems -> addons` unidirecional, validável por IA.
 
 ## 2. Arquitetura — 4 Pilares (Epictellers/GDQuest)
 Ver `AGENTS.md`. Diagrama de dependência:
@@ -16,6 +16,9 @@ addons (grid_toolkit, gut) <- systems (caravan, tactical, ability) <- content (d
 gyms (isolado, .gitignore no build)
 ```
 CI bloqueia: `grep -r "gyms/" --include="*.gd" addons/ systems/ ui/` deve falhar.
+
+### Stats Genéricos (Opção B — 100% data-driven)
+Você define atributos em `data/stats/attributes.tres` (`AttributeDefinition[]`). `UnitStats` guarda `Dictionary[stat_id -> value]` validado. `ICombatResolver` lê stats genéricos, sem hardcode `armor/strength`. Exemplos de resolvers em `gyms/` provam genericidade.
 
 ### Pastas
 ```
@@ -29,10 +32,11 @@ CI bloqueia: `grep -r "gyms/" --include="*.gd" addons/ systems/ ui/` deve falhar
 │   └── common/               # EventBus (signals), Registry, SaveSystem, DataValidator, SaveCompat
 ├── ui/                       # caravan_bar, tactical_hud, event_popup (só LEEM de systems)
 ├── content/                  # vazio, usa systems (exemplo em data/)
-├── data/                     # PLUGÁVEL — onde IA atua
-│   ├── abilities/*.tres
+├── data/                     # PLUGÁVEL — onde IA atua (100% genérico)
+│   ├── stats/                # AttributeDefinition[] (você define hp/armor/shield/mana...)
+│   ├── abilities/*.tres      # custo {stat_id: val} genérico
 │   ├── events/*.tres
-│   └── classes/*.tres
+│   └── classes/*.tres        # classes referenciam stats via id
 ├── placeholders/             # capsule, cube, vfx_circle
 ├── tests/                    # GUT unit/smoke/regression
 ├── docs/
@@ -88,18 +92,37 @@ class_name IAIBehavior
 func generate_intent(unit: Unit, board: Board) -> Intent
 ```
 
-### 4.3 AbilityResource (Data-Driven)
+### 4.3 AbilityResource (Genérico — custo por stat_id)
 ```gdscript
 class_name AbilityResource extends Resource
 @export var id: String
 @export var nome: String
-@export var custo: Dictionary = {"willpower": 1, "renown": 0}
+@export var custo: Dictionary = {} # {stat_id: valor} ex: {"willpower":1} ou {"mana":3,"stamina":1} — validado contra data/stats/
 @export var alcance: int = 1
 @export var area: String = "single" # single, 3x3, cross, line
-@export var efeitos: Array[Resource] # DamageEffect, HealEffect, StatusEffect
+@export var efeitos: Array[Resource] # Array[StatEffect] genérico: {stat_id, delta, element}
 @export var tags_required: PackedStringArray
-@export var vfx: PackedScene # placeholder: res://placeholders/vfx_circle.tscn
-@export var logic_script: GDScript # implementa IAbilityLogic
+@export var vfx: PackedScene
+@export var logic_script: GDScript # Strategy plugável (ICombatResolver lê stats genéricos)
+```
+
+### 4.3b Stats Genéricos
+```gdscript
+class_name AttributeDefinition extends Resource
+@export var id: String # "hp", "armor", "mana", "shield"...
+@export var nome: String
+@export var default_value: int = 10
+@export var min_value: int = 0
+@export var max_value: int = 999
+@export var is_resource: bool = false # se true, é custo (willpower/mana) vs stat base
+
+class_name UnitStats extends Resource
+@export var values: Dictionary = {} # {stat_id: int} validado contra AttributeDefinition[]
+
+class_name StatsRegistry # autoload ou singleton em systems/stats/
+func get_definition(id: String) -> AttributeDefinition
+func is_valid_stat(id: String) -> bool
+func clamp_value(id: String, v: int) -> int
 ```
 
 ### 4.4 EventResource
@@ -131,20 +154,20 @@ class_name EventChoice extends Resource
 
 ## 7. Schema IA — Como IA gera conteúdo sem quebrar
 
-### Habilidade JSON -> .tres
+### Habilidade JSON -> .tres (genérico)
 ```json
 {
   "id": "meteor",
   "nome": "Meteoro",
-  "custo": {"willpower": 3},
+  "custo": {"mana": 3}, // stat_id genérico, validado contra data/stats/
   "alcance": 5,
   "area": "3x3",
-  "efeitos": [{"type": "Damage", "value": 12, "element": "fire"}, {"type": "Burn", "turns": 2}],
+  "efeitos": [{"stat_id": "hp", "delta": -12, "element": "fire"}, {"stat_id": "burn", "delta": 2}],
   "vfx": "res://placeholders/vfx_circle.tscn",
   "logic_script": "res://systems/ability/logics/area_damage.gd"
 }
 ```
-Validator rejeita se: `alcance > 10`, `area` não em whitelist, `efeitos` tipo desconhecido.
+Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, `alcance > 10`, `area` não em whitelist.
 
 ### Evento JSON
 ```json
@@ -186,8 +209,8 @@ godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
 - **Fase 0 (Bootstrap):** project.godot 4.7.2 + estrutura + grid 8x8 + capsule anda (A*) + export Android APK debug ok.
 - **Fase 1 (Caravana MVP):** CaravanManager + Travel + Camp + Market + UI topbar, viajar 10 dias consome corretamente.
 - **Fase 2 (Eventos plugáveis):** EventSystem data-driven + 3 eventos + schema documentado para IA.
-- **Fase 3 (Tático):** TurnManager + CombatResolver BannerSaga + transição Caravana->Combate.
-- **Fase 4 (Habilidades):** AbilitySystem + 3 magias + validator.
+- **Fase 3 (Tático Genérico):** TurnManager + ICombatResolver plugável (3 exemplos em gyms: banner_saga, hp_only, shield) + transição Caravana->Combate.
+- **Fase 4 (Habilidades Genéricas):** AbilitySystem stat_id + validator contra data/stats/ + 3 magias exemplo.
 - **Fase 5 (Polimento):** Swap placeholders, otimização, fixtures save compat.
 
 ## 11. Decisões Registradas

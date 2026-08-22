@@ -8,9 +8,12 @@ script = ExtResource("1_aaa")
 id = "fireball"
 nome = "Bola de Fogo"
 custo = {
-"willpower": 2,
-"renown": 0
+"willpower": 2
 }
+efeitos = [{
+"stat_id": "hp",
+"delta": -6
+}]
 alcance = 5
 area = "3x3"
 tags_required = PackedStringArray()

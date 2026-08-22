@@ -12,4 +12,8 @@ custo = {
 }
 alcance = 3
 area = "single"
+efeitos = [{
+"stat_id": "hp",
+"delta": 5
+}]
 logic_script = ExtResource("2_ddd")

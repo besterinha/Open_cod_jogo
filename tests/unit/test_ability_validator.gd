@@ -27,6 +27,7 @@ func test_invalid_area_fails() -> void:
 	assert_true(errs.any(func(e: String) -> bool: return "area" in e))
 
 func test_fireball_fixture_valid() -> void:
+	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
 	var a: Resource = load("res://data/abilities/fireball.tres")
-	var errs: Array[String] = DataValidator.validate_ability(a)
+	var errs: Array[String] = DataValidator.validate_ability(a, db)
 	assert_eq(errs.size(), 0, "fireball.tres inválido: %s" % ", ".join(errs))

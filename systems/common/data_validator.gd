@@ -5,12 +5,11 @@ class_name DataValidator
 
 const ALLOWED_AREAS: Array[String] = ["single", "3x3", "cross", "line"]
 
-static func validate_ability(res: Resource) -> Array[String]:
+static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Array[String]:
 	var errs: Array[String] = []
 	if res == null:
 		errs.append("Resource nulo")
 		return errs
-	# checa propriedades via get (não tipado, pois Resource genérico)
 	var id: String = res.get("id") if "id" in res else ""
 	if id.is_empty():
 		errs.append("id vazio")
@@ -28,6 +27,17 @@ static func validate_ability(res: Resource) -> Array[String]:
 		for k in custo.keys():
 			if int(custo[k]) < 0:
 				errs.append("custo[%s] negativo" % k)
+			if db != null and not db.is_valid_id(str(k)):
+				errs.append("custo stat_id desconhecido: %s (defina em data/stats/*.tres)" % k)
+	var efeitos = res.get("efeitos") if "efeitos" in res else null
+	if efeitos is Array:
+		for e in efeitos:
+			if e is Dictionary:
+				var sid: String = str(e.get("stat_id", ""))
+				if sid.is_empty():
+					errs.append("efeito sem stat_id")
+				elif db != null and not db.is_valid_id(sid):
+					errs.append("efeito stat_id desconhecido: %s" % sid)
 	return errs
 
 static func validate_event(res: Resource) -> Array[String]:
@@ -46,8 +56,8 @@ static func validate_event(res: Resource) -> Array[String]:
 		errs.append("evento sem escolhas")
 	return errs
 
-static func is_valid_ability(res: Resource) -> bool:
-	return validate_ability(res).is_empty()
+static func is_valid_ability(res: Resource, db: AttributeDatabase = null) -> bool:
+	return validate_ability(res, db).is_empty()
 
 static func is_valid_event(res: Resource) -> bool:
 	return validate_event(res).is_empty()
