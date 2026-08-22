@@ -355,6 +355,9 @@ func _handle_tap(pos: Vector2) -> void:
 			print("[Move] Não pode mover para %s" % cell)
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Pinch zoom — deixa CameraRig lidar, não marca drag
+	if event is InputEventMagnifyGesture:
+		return
 	# Touch drag vs tap (threshold 10px) — evita conflito com CameraRig pan
 	if event is InputEventScreenTouch:
 		if event.pressed:
