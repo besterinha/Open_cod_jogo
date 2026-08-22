@@ -1,5 +1,5 @@
-extends Node
 class_name EventSystem
+extends Node
 # Data-driven: rola evento por peso/trigger, aplica escolha.
 
 var caravan: CaravanManager

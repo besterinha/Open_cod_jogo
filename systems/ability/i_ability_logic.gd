@@ -1,5 +1,5 @@
-extends Resource
 class_name IAbilityLogic
+extends Resource
 # Interface Strategy para lógica de habilidade.
 # Implemente em GDScript plugável e referencie em AbilityResource.logic_script.
 # Exemplo: res://systems/ability/logics/area_damage.gd

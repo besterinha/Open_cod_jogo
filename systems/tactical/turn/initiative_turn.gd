@@ -1,5 +1,5 @@
-extends TurnManager
 class_name InitiativeTurn
+extends TurnManager
 # Alternativa plugável: ordena por stat_id configurável (default "movement" como iniciativa).
 # Trocar para "speed", "agilidade" é só mudar init_stat_id.
 

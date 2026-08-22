@@ -1,5 +1,5 @@
-extends Node
 class_name TravelSystem
+extends Node
 # Plugável: consome dias, emite sinais, gerencia velocidade/terreno.
 # Usa CaravanManager para aplicar custo.
 

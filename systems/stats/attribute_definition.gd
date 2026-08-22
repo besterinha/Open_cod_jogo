@@ -1,5 +1,5 @@
-extends Resource
 class_name AttributeDefinition
+extends Resource
 # Define um atributo genérico. Você cria tantos quanto quiser em data/stats/*.tres.
 # Exemplos: hp, armor, shield, mana, willpower, stamina, movimento...
 

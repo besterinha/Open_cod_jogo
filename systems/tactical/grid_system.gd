@@ -1,5 +1,5 @@
-extends RefCounted
 class_name GridSystem
+extends RefCounted
 # Grid quadrado 2.5D isométrico — agnóstico de rendering.
 # Usado por tactical movement + ability area floodfill.
 # Plugável: trocar por HexGridSystem mantendo mesma interface.

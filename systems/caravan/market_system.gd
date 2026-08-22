@@ -1,5 +1,5 @@
-extends Node
 class_name MarketSystem
+extends Node
 # Plugável: troca Renown <-> Supplies com taxa variável.
 
 var caravan: CaravanManager

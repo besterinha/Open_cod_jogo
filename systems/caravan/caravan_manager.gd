@@ -1,5 +1,5 @@
-extends Node
 class_name CaravanManager
+extends Node
 # Sistema plugável de recursos da caravana (Banner Saga-like).
 # ICaravanResourceSystem default simples (1 supply = 1 dia). Trocar lógica = trocar este arquivo.
 # 100% gratuito, sem dependência de content.

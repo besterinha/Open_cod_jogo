@@ -1,5 +1,5 @@
-extends Resource
 class_name UnitStats
+extends Resource
 # Mapa genérico stat_id -> valor, validado contra AttributeDatabase.
 # Cada unidade (Node) terá um UnitStats instance.
 

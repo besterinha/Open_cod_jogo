@@ -1,5 +1,5 @@
-extends TurnManager
 class_name TeamRoundRobin
+extends TurnManager
 # Default plugável: times alternam, cada unidade do time age uma vez por round.
 # Ex: Team0: A,B -> Team1: X,Y -> round++
 

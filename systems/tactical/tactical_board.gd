@@ -1,5 +1,5 @@
-extends Node3D
 class_name TacticalBoard
+extends Node3D
 # Board genérico — guarda grid, units, ocupação. Não tem lógica de dano.
 
 @export var grid_size: Vector2i = Vector2i(8, 8)

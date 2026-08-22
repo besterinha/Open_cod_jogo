@@ -1,5 +1,5 @@
-extends Resource
 class_name AbilityResource
+extends Resource
 # Resource plugável GENÉRICO para qualquer habilidade/magia/ação.
 # Custo e efeitos referenciam stat_id definidos em data/stats/*.tres — motor não trava em willpower/renown.
 # Ex: {"mana": 3, "stamina":1} ou {"hp": -5} se quiser custo em vida.

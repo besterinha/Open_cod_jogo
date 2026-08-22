@@ -1,5 +1,5 @@
-extends Resource
 class_name CombatResolver
+extends Resource
 # Interface base plugável — você implementa a fórmula que quiser em GDScript
 # e registra via Registry. Motor não trava em Banner Saga.
 # Exemplos concretos em gyms/resolvers/.

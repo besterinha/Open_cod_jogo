@@ -1,5 +1,5 @@
-extends Node
 class_name MovementSystem
+extends Node
 # Sistema genérico: floodfill para alcance + A* para caminho.
 
 var board: TacticalBoard

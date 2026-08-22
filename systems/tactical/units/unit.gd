@@ -1,5 +1,5 @@
-extends Node3D
 class_name Unit
+extends Node3D
 # Unidade genérica 2.5D — stats 100% data-driven via UnitStats (Dictionary stat_id->int).
 # Sem hardcode hp/armor. Visual placeholder swapável.
 

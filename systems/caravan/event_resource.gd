@@ -1,5 +1,5 @@
-extends Resource
 class_name EventResource
+extends Resource
 # Resource plugável para eventos de caravana.
 # IA gera .tres/event_*.tres, nunca edita systems/.
 

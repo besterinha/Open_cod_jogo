@@ -1,5 +1,5 @@
-extends Node
 class_name TurnManager
+extends Node
 # Interface base plugável — escolha implementação via Registry.
 
 var board: TacticalBoard

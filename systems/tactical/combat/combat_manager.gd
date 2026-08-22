@@ -1,5 +1,5 @@
-extends Node
 class_name CombatManager
+extends Node
 # Orquestra combate genérico: custo -> resolver -> aplica efeitos.
 # Não trava em hp/armor, usa UnitStats genérico + CombatResolver plugável.
 

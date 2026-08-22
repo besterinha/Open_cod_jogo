@@ -1,5 +1,5 @@
-extends Node
 class_name CampSystem
+extends Node
 # Plugável: descanso, cura, perde supplies.
 
 var caravan: CaravanManager

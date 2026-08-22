@@ -1,5 +1,5 @@
-extends Resource
 class_name EventChoice
+extends Resource
 
 @export var label: String = ""
 @export var cost: Dictionary = {} # {supplies: 20, morale: -10}

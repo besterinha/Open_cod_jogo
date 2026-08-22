@@ -1,7 +1,7 @@
+class_name DataValidator
 extends RefCounted
 # DataValidator — valida Resources plugáveis antes de aceitar.
 # Usado por GUT + godot-validation-flow + CI. IA nunca passa sem isso.
-class_name DataValidator
 
 const ALLOWED_AREAS: Array[String] = ["single", "3x3", "cross", "line"]
 

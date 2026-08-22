@@ -23,13 +23,14 @@ data/     -> Dados plugáveis (Resource .tres) onde IA atua
 ```
 Fluxo de dependência: `content -> systems -> addons`, `ui -> systems`. CI bloqueia `gyms -> !gyms`.
 
-## Convenções
-- Código: GDScript tipado, `snake_case` vars/funcs, `PascalCase` classes, `SCREAMING_SNAKE` const.
+## Convenções — Seguir `docs/STYLE.md` (fonte única)
+- **Estilo:** GDScript tipado obrigatório (`var hp: int`, `func get_stat(id: String) -> int:`), `snake_case` vars/funcs, `PascalCase` classes, `SCREAMING_SNAKE` const. Ordem: `class_name → extends → signal → @export → var → @onready → func`. Ver `docs/STYLE.md` + `GDScript style guide 4.7`.
+- **Arquitetura:** `addons → systems → content/data` + `ui → systems`, `gyms` isolado. CI bloqueia `gyms` fora de `gyms/`.
 - Resources plugáveis: `class_name AbilityResource extends Resource` + `IAbilityLogic` (Strategy). Toda magia/evento é `.tres` referenciando `logic_script: GDScript` + `vfx: PackedScene` placeholder.
 - Placeholders em `placeholders/` (capsule/cube/circle) — swap por `Sprite3D` textura é só trocar referência no `.tres`.
 - 2.5D: cena `Node3D` + `Camera3D` ortogonal isométrica (45°), `Sprite3D` billboard para unidades.
 - Android: `touch tap` mover, `pinch` zoom, `long-press` info. Anchors para 720p–2K.
-- Validar antes de commit: `godot-validation-flow` + `DataValidator` + `gut --headless -gexit`
+- Validar antes de commit: `godot --headless --check-only` + `.editorconfig` (Tab/LF) + `godot-validation-flow` + `DataValidator` + `gut --headless -gexit` (CI falha se style != ok)
 - Commits: `feat:`, `fix:`, `docs:`, `chore:`. Gratuito apenas (sem asset pago).
 
 ## Comandos úteis

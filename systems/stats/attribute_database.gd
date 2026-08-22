@@ -1,5 +1,5 @@
-extends Resource
 class_name AttributeDatabase
+extends Resource
 # Coleção de AttributeDefinition — carregado de data/stats/*.tres
 # Registry lê daqui para validar qualquer custo/efeito.
 

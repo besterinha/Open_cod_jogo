@@ -1,3 +1,4 @@
+class_name CameraRig
 extends Node3D
 # CameraRig touch — drag pan + pinch zoom para 2.5D isométrico ortogonal.
 # Uso: coloque Camera3D como filho deste Node3D. Rig move no plano XZ, câmera mantém offset.
