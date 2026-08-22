@@ -30,6 +30,11 @@ func remove_unit(unit: Unit) -> void:
 
 func _on_unit_defeated(unit: Unit) -> void:
 	print("[Board] %s derrotado" % unit.display_name)
+	_occupancy.erase(unit.cell)
+	# esconde visual mas mantém em units para histórico; is_walkable já ignora derrotados
+	unit.visible = false
+	# opcional: liberar célula para movimento
+	unit_removed.emit(unit)
 
 func get_unit_at(cell: Vector2i) -> Unit:
 	return _occupancy.get(cell) as Unit
@@ -38,10 +43,18 @@ func is_walkable(cell: Vector2i) -> bool:
 	if not grid.is_within_bounds(cell):
 		return false
 	if _occupancy.has(cell):
+		var occ: Unit = _occupancy[cell] as Unit
+		if occ and occ.is_defeated():
+			return true # célula de morto é andável
 		return false
 	return true
 
 func update_occupancy(unit: Unit, old_cell: Vector2i, new_cell: Vector2i) -> void:
+	if _occupancy.has(new_cell):
+		var existing: Unit = _occupancy[new_cell] as Unit
+		if existing and not existing.is_defeated() and existing != unit:
+			push_warning("[Board] update_occupancy: célula %s já ocupada por %s" % [new_cell, existing.display_name])
+			return
 	_occupancy.erase(old_cell)
 	_occupancy[new_cell] = unit
 

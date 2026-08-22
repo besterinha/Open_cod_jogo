@@ -10,6 +10,11 @@ extends Node3D
 var selected_unit: Unit = null
 var selected_ability: AbilityResource = null
 var _db: AttributeDatabase = null
+var _green_mat: StandardMaterial3D = null
+var _blue_mat: StandardMaterial3D = null
+var _highlight_box: BoxMesh = null
+var _touch_start: Vector2 = Vector2.ZERO
+var _is_drag: bool = false
 
 func _ready() -> void:
 	# StatsRegistry (se existir)
@@ -19,12 +24,23 @@ func _ready() -> void:
 	else:
 		_db = load("res://data/stats/attributes.tres") as AttributeDatabase
 
-	# Setup board
-	board.grid = GridSystem.new(Vector2i(8, 8), 1.0)
-	board.grid_size = Vector2i(8, 8)
-	# Remove placeholder grid, cria tiles visuais
+	# Setup board — fonte única é TacticalBoard.grid_size/cell_size (default 8x8 já no .tscn)
+	board.grid = GridSystem.new(board.grid_size, board.cell_size)
 	_spawn_tiles()
 	_spawn_units()
+	# sync CameraRig grid_limit com board
+	var rig: Node = get_node_or_null("CameraRig")
+	if rig and "grid_limit" in rig:
+		rig.set("grid_limit", board.grid_size)
+	# shared highlight materials/mesh (pooling)
+	_green_mat = StandardMaterial3D.new()
+	_green_mat.albedo_color = Color(0.2, 1, 0.3, 0.6)
+	_green_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_blue_mat = StandardMaterial3D.new()
+	_blue_mat.albedo_color = Color(0.3, 0.5, 1, 0.45)
+	_blue_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_highlight_box = BoxMesh.new()
+	_highlight_box.size = Vector3(0.8, 0.05, 0.8)
 
 	# Setup systems
 	turn_manager.setup(board)
@@ -54,20 +70,30 @@ func _ready() -> void:
 	print("[TacticalArena] Motor genérico pronto. Grid %s, Units %d" % [board.grid_size, board.units.size()])
 	turn_manager.start_battle()
 
+var _light_mat: StandardMaterial3D = null
+var _dark_mat: StandardMaterial3D = null
+
+func _ensure_tile_mats() -> void:
+	if _light_mat == null:
+		_light_mat = StandardMaterial3D.new()
+		_light_mat.albedo_color = Color(0.3, 0.3, 0.32)
+	if _dark_mat == null:
+		_dark_mat = StandardMaterial3D.new()
+		_dark_mat.albedo_color = Color(0.25, 0.25, 0.27)
+
 func _spawn_tiles() -> void:
+	_ensure_tile_mats()
 	var container: Node3D = $TacticalBoard/Tiles
 	if container == null:
 		container = Node3D.new()
 		container.name = "Tiles"
 		board.add_child(container)
-	for x in 8:
-		for y in 8:
+	for x in board.grid_size.x:
+		for y in board.grid_size.y:
 			var tile: Node3D = preload("res://placeholders/tactical/tile_cube.tscn").instantiate()
 			tile.position = board.grid.cell_to_world(Vector2i(x, y))
 			var mesh: MeshInstance3D = tile as MeshInstance3D
-			var mat := StandardMaterial3D.new()
-			mat.albedo_color = Color(0.3, 0.3, 0.32) if ((x + y) % 2) == 0 else Color(0.25, 0.25, 0.27)
-			mesh.material_override = mat
+			mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
 			container.add_child(tile)
 
 func _spawn_units() -> void:
@@ -221,6 +247,7 @@ func _update_turn_label(unit: Unit) -> void:
 
 func _on_battle_ended(winner: int) -> void:
 	print("[Battle] Vitória do time %d!" % winner)
+	_clear_highlights()
 	EventBus.battle_requested.emit("victory_%d" % winner)
 	await get_tree().create_timer(1.5).timeout
 	if winner == 0:
@@ -230,86 +257,97 @@ func _on_battle_ended(winner: int) -> void:
 		print("[Battle] Derrota — Game Over (volta para jornada para teste)")
 		get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
 
-func _highlight_reachable(unit: Unit) -> void:
-	# limpa highlights antigos
+func _clear_highlights() -> void:
 	for c in get_tree().get_nodes_in_group("highlight"):
 		c.queue_free()
 	for c in get_tree().get_nodes_in_group("highlight_abil"):
 		c.queue_free()
+
+func _highlight_reachable(unit: Unit) -> void:
+	# menos poluição: verde = movimento, azul = alcance da habilidade (só se selecionada, sem sobrepor verde)
+	_clear_highlights()
+	if unit == null or unit.is_defeated():
+		return
 	var reachable: Array[Vector2i] = movement.get_reachable(unit)
 	for cell in reachable:
 		var hl := MeshInstance3D.new()
-		hl.mesh = BoxMesh.new()
-		(hl.mesh as BoxMesh).size = Vector3(0.8, 0.05, 0.8)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.2, 1, 0.3, 0.6)
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		hl.material_override = mat
+		hl.mesh = _highlight_box
+		hl.material_override = _green_mat
 		hl.position = board.grid.cell_to_world(cell) + Vector3(0, 0.02, 0)
 		hl.add_to_group("highlight")
 		$TacticalBoard.add_child(hl)
-	# alcance da habilidade selecionada em azul
+	# alcance da habilidade selecionada em azul (menos poluído: só se selecionada)
 	if selected_ability:
 		var abil_reach: Array[Vector2i] = board.grid.get_reachable(unit.cell, selected_ability.alcance, func(c: Vector2i) -> bool: return board.grid.is_within_bounds(c))
 		for cell in abil_reach:
 			if reachable.has(cell):
-				continue # já verde
+				continue # já verde, não poluir
 			var hl2 := MeshInstance3D.new()
-			hl2.mesh = BoxMesh.new()
-			(hl2.mesh as BoxMesh).size = Vector3(0.85, 0.04, 0.85)
-			var mat2 := StandardMaterial3D.new()
-			mat2.albedo_color = Color(0.3, 0.5, 1, 0.45)
-			mat2.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			hl2.material_override = mat2
+			hl2.mesh = _highlight_box
+			hl2.material_override = _blue_mat
 			hl2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.025, 0)
 			hl2.add_to_group("highlight_abil")
 			$TacticalBoard.add_child(hl2)
 
-func _unhandled_input(event: InputEvent) -> void:
+func _handle_tap(pos: Vector2) -> void:
 	var unit: Unit = turn_manager.get_current_unit()
 	if unit == null or unit.team != 0:
-		return # só player controla
-	if event is InputEventScreenTouch and event.pressed:
-		var cam: Camera3D = get_node_or_null("CameraRig/Camera3D") as Camera3D
-		if cam == null:
-			cam = get_node_or_null("Camera3D") as Camera3D
-		if cam == null:
-			return
-		var from: Vector3 = cam.project_ray_origin(event.position)
-		var dir: Vector3 = cam.project_ray_normal(event.position)
-		if dir.y == 0:
-			return
-		var t: float = -from.y / dir.y
-		var hit: Vector3 = from + dir * t
-		var cell: Vector2i = board.grid.world_to_cell(hit)
-		if not board.grid.is_within_bounds(cell):
-			return
-		print("[Input] Tap %s" % cell)
-		# se tem unidade na cell, usa habilidade selecionada (permite curar aliado ou atacar inimigo)
-		var target_unit: Unit = board.get_unit_at(cell)
-		if target_unit:
-			var abil: AbilityResource = selected_ability
-			if abil == null:
-				abil = load("res://data/abilities/strike.tres") as AbilityResource
-			# para heal (delta>0) permite aliado, para dano permite inimigo — MVE simples permite qualquer alvo
-			if combat.use_ability(unit, abil, cell):
-				print("[Combat Touch] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
-				turn_manager.end_turn()
-			else:
-				print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [abil.nome, cell, abil.custo])
-		elif board.is_walkable(cell) or cell == unit.cell:
-			# tenta mover
-			if movement.can_move_to(unit, cell):
-				movement.move_unit(unit, cell)
-				print("[Move] %s -> %s" % [unit.display_name, cell])
-				# após mover, pode atacar ou só passar turno? Aqui passa turno após mover para simplificar
-				# turn_manager.end_turn()
-				_highlight_reachable(unit)
-			else:
-				print("[Move] Não pode mover para %s" % cell)
-	elif event is InputEventKey and event.pressed:
+		return
+	var cam: Camera3D = get_node_or_null("CameraRig/Camera3D") as Camera3D
+	if cam == null:
+		cam = get_node_or_null("Camera3D") as Camera3D
+	if cam == null:
+		return
+	var from: Vector3 = cam.project_ray_origin(pos)
+	var dir: Vector3 = cam.project_ray_normal(pos)
+	if dir.y == 0:
+		return
+	var t: float = -from.y / dir.y
+	var hit: Vector3 = from + dir * t
+	var cell: Vector2i = board.grid.world_to_cell(hit)
+	if not board.grid.is_within_bounds(cell):
+		return
+	print("[Input] Tap %s" % cell)
+	var target_unit: Unit = board.get_unit_at(cell)
+	if target_unit:
+		var abil: AbilityResource = selected_ability
+		if abil == null:
+			abil = load("res://data/abilities/strike.tres") as AbilityResource
+		if combat.use_ability(unit, abil, cell):
+			print("[Combat Touch] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
+			turn_manager.end_turn()
+		else:
+			print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [abil.nome, cell, abil.custo])
+	elif board.is_walkable(cell) or cell == unit.cell:
+		if movement.can_move_to(unit, cell):
+			movement.move_unit(unit, cell)
+			print("[Move] %s -> %s" % [unit.display_name, cell])
+			_highlight_reachable(unit)
+		else:
+			print("[Move] Não pode mover para %s" % cell)
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Touch drag vs tap (threshold 10px) — evita conflito com CameraRig pan
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touch_start = event.position
+			_is_drag = false
+		else:
+			# release — só considera tap se não arrastou
+			if not _is_drag and _touch_start.distance_to(event.position) < 10.0:
+				_handle_tap(event.position)
+			_is_drag = false
+		return
+	if event is InputEventScreenDrag:
+		if _touch_start.distance_to(event.position) > 10.0:
+			_is_drag = true
+		return # deixa CameraRig lidar com pan
+	# Mouse para debug PC
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_handle_tap(event.position)
+		return
+	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_SPACE:
 			turn_manager.end_turn()
-		if event.keycode == KEY_J:
-			# debug: transição para jornada
+		elif event.keycode == KEY_J:
 			get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
