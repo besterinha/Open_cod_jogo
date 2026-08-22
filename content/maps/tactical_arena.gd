@@ -13,6 +13,8 @@ var _db: AttributeDatabase = null
 var _green_mat: StandardMaterial3D = null
 var _blue_mat: StandardMaterial3D = null
 var _highlight_box: BoxMesh = null
+var _outline_mat: StandardMaterial3D = null
+var _outline_box: BoxMesh = null
 var _touch_start: Vector2 = Vector2.ZERO
 var _is_drag: bool = false
 
@@ -32,15 +34,26 @@ func _ready() -> void:
 	var rig: Node = get_node_or_null("CameraRig")
 	if rig and "grid_limit" in rig:
 		rig.set("grid_limit", board.grid_size)
-	# shared highlight materials/mesh (pooling)
+	# shared highlight materials/mesh (pooling) — Opção C máxima legibilidade
 	_green_mat = StandardMaterial3D.new()
-	_green_mat.albedo_color = Color(0.2, 1, 0.3, 0.6)
+	_green_mat.albedo_color = Color(0.1, 1, 0.2, 0.85)
 	_green_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_green_mat.emission_enabled = true
+	_green_mat.emission = Color(0.2, 1, 0.3)
+	_green_mat.emission_energy_multiplier = 1.5
 	_blue_mat = StandardMaterial3D.new()
-	_blue_mat.albedo_color = Color(0.3, 0.5, 1, 0.45)
+	_blue_mat.albedo_color = Color(0.25, 0.55, 1, 0.85)
 	_blue_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_blue_mat.emission_enabled = true
+	_blue_mat.emission = Color(0.3, 0.5, 1)
+	_blue_mat.emission_energy_multiplier = 1.5
 	_highlight_box = BoxMesh.new()
-	_highlight_box.size = Vector3(0.8, 0.05, 0.8)
+	_highlight_box.size = Vector3(0.92, 0.08, 0.92)
+	_outline_mat = StandardMaterial3D.new()
+	_outline_mat.albedo_color = Color(0, 0, 0, 0.3)
+	_outline_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	_outline_box = BoxMesh.new()
+	_outline_box.size = Vector3(1.0, 0.04, 1.0)
 
 	# Setup systems
 	turn_manager.setup(board)
@@ -76,10 +89,10 @@ var _dark_mat: StandardMaterial3D = null
 func _ensure_tile_mats() -> void:
 	if _light_mat == null:
 		_light_mat = StandardMaterial3D.new()
-		_light_mat.albedo_color = Color(0.3, 0.3, 0.32)
+		_light_mat.albedo_color = Color(0.58, 0.56, 0.52)
 	if _dark_mat == null:
 		_dark_mat = StandardMaterial3D.new()
-		_dark_mat.albedo_color = Color(0.25, 0.25, 0.27)
+		_dark_mat.albedo_color = Color(0.44, 0.42, 0.39)
 
 func _spawn_tiles() -> void:
 	_ensure_tile_mats()
@@ -262,6 +275,8 @@ func _clear_highlights() -> void:
 		c.queue_free()
 	for c in get_tree().get_nodes_in_group("highlight_abil"):
 		c.queue_free()
+	for c in get_tree().get_nodes_in_group("highlight_outline"):
+		c.queue_free()
 
 func _highlight_reachable(unit: Unit) -> void:
 	# menos poluição: verde = movimento, azul = alcance da habilidade (só se selecionada, sem sobrepor verde)
@@ -270,10 +285,17 @@ func _highlight_reachable(unit: Unit) -> void:
 		return
 	var reachable: Array[Vector2i] = movement.get_reachable(unit)
 	for cell in reachable:
+		# outline preto por baixo
+		var ol := MeshInstance3D.new()
+		ol.mesh = _outline_box
+		ol.material_override = _outline_mat
+		ol.position = board.grid.cell_to_world(cell) + Vector3(0, 0.015, 0)
+		ol.add_to_group("highlight_outline")
+		$TacticalBoard.add_child(ol)
 		var hl := MeshInstance3D.new()
 		hl.mesh = _highlight_box
 		hl.material_override = _green_mat
-		hl.position = board.grid.cell_to_world(cell) + Vector3(0, 0.02, 0)
+		hl.position = board.grid.cell_to_world(cell) + Vector3(0, 0.035, 0)
 		hl.add_to_group("highlight")
 		$TacticalBoard.add_child(hl)
 	# alcance da habilidade selecionada em azul (menos poluído: só se selecionada)
@@ -282,10 +304,16 @@ func _highlight_reachable(unit: Unit) -> void:
 		for cell in abil_reach:
 			if reachable.has(cell):
 				continue # já verde, não poluir
+			var ol2 := MeshInstance3D.new()
+			ol2.mesh = _outline_box
+			ol2.material_override = _outline_mat
+			ol2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.015, 0)
+			ol2.add_to_group("highlight_outline")
+			$TacticalBoard.add_child(ol2)
 			var hl2 := MeshInstance3D.new()
 			hl2.mesh = _highlight_box
 			hl2.material_override = _blue_mat
-			hl2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.025, 0)
+			hl2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.035, 0)
 			hl2.add_to_group("highlight_abil")
 			$TacticalBoard.add_child(hl2)
 
