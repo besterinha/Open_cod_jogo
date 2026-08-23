@@ -22,7 +22,34 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 	if path.is_empty():
 		return false
 	board.update_occupancy(unit, old, target)
-	unit.move_to(target, board.grid)
+	# lógica de célula imediata (para occupancy), animação de posição tween 0.35s
+	var start_pos: Vector3 = unit.position
+	var end_pos: Vector3 = board.grid.cell_to_world(target)
+	unit.cell = target
+	# sem árvore (teste unit new() isolado) -> teleporte instantâneo
+	if unit.get_tree() == null or not unit.is_inside_tree():
+		unit.position = end_pos
+		unit.moved.emit(target)
+		return true
+	# Tween placeholder caminha 0.35s: slide + bob 0.08 + lean 5°
+	var tw: Tween = unit.create_tween()
+	tw.set_parallel(false)
+	tw.tween_property(unit, "position", end_pos, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# bob paralelo (y)
+	var y_tw: Tween = unit.create_tween()
+	y_tw.set_parallel(false)
+	y_tw.tween_property(unit, "position:y", end_pos.y + 0.08, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	y_tw.tween_property(unit, "position:y", end_pos.y, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# lean Visual 5° na direção
+	var vis: Node = unit.get_node_or_null("Visual")
+	if vis:
+		var dir: float = sign(end_pos.x - start_pos.x)
+		if dir == 0:
+			dir = sign(end_pos.z - start_pos.z)
+		var lean_tw: Tween = unit.create_tween()
+		lean_tw.tween_property(vis, "rotation:z", deg_to_rad(5.0 * dir), 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		lean_tw.tween_property(vis, "rotation:z", 0.0, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.finished.connect(func() -> void: unit.moved.emit(target), CONNECT_ONE_SHOT)
 	return true
 
 func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
