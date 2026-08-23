@@ -65,7 +65,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		var f: Vector3 = Vector3(-cam_basis.z.x, 0, -cam_basis.z.z).normalized()
 		var factor: float = pan_speed * (camera.size / 10.0)
 		position -= r * event.relative.x * factor
-		position -= f * event.relative.y * factor
+		position += f * event.relative.y * factor
 		_clamp_position()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
@@ -98,7 +98,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var f2: Vector3 = Vector3(-cam_basis2.z.x, 0, -cam_basis2.z.z).normalized()
 			var factor2: float = pan_speed * (camera.size / 10.0)
 			position -= r2 * event.relative.x * factor2
-			position -= f2 * event.relative.y * factor2
+			position += f2 * event.relative.y * factor2
 			_clamp_position()
 	elif event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:

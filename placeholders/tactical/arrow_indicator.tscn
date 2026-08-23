@@ -1,0 +1,12 @@
+[gd_scene load_steps=1 format=3 uid="uid://4rr0w1nd1c4t0r"]
+
+[node name="ArrowIndicator" type="Node3D"]
+
+[node name="ArrowLabel" type="Label3D" parent="."]
+text = "▼"
+font_size = 96
+outline_size = 12
+outline_modulate = Color(0, 0, 0, 0.9)
+modulate = Color(1, 0.92, 0.25, 1)
+billboard = 1
+double_sided = true

@@ -15,6 +15,8 @@ var _blue_mat: StandardMaterial3D = null
 var _highlight_box: BoxMesh = null
 var _outline_mat: StandardMaterial3D = null
 var _outline_box: BoxMesh = null
+var _turn_arrow: Node3D = null
+var _arrow_tween: Tween = null
 var _touch_start: Vector2 = Vector2.ZERO
 var _is_drag: bool = false
 
@@ -54,6 +56,7 @@ func _ready() -> void:
 	_outline_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	_outline_box = BoxMesh.new()
 	_outline_box.size = Vector3(1.0, 0.04, 1.0)
+	_ensure_turn_arrow()
 
 	# Setup systems
 	turn_manager.setup(board)
@@ -89,10 +92,52 @@ var _dark_mat: StandardMaterial3D = null
 func _ensure_tile_mats() -> void:
 	if _light_mat == null:
 		_light_mat = StandardMaterial3D.new()
-		_light_mat.albedo_color = Color(0.58, 0.56, 0.52)
+		_light_mat.albedo_color = Color(0.82, 0.80, 0.76)
 	if _dark_mat == null:
 		_dark_mat = StandardMaterial3D.new()
-		_dark_mat.albedo_color = Color(0.44, 0.42, 0.39)
+		_dark_mat.albedo_color = Color(0.68, 0.66, 0.62)
+
+func _ensure_turn_arrow() -> void:
+	if _turn_arrow != null:
+		return
+	# tenta carregar placeholder .tscn se existir, senão cria Label3D 2D fallback
+	var arrow_scene: PackedScene = load("res://placeholders/tactical/arrow_indicator.tscn") as PackedScene
+	if arrow_scene != null:
+		_turn_arrow = arrow_scene.instantiate() as Node3D
+	else:
+		_turn_arrow = Node3D.new()
+		var lbl := Label3D.new()
+		lbl.text = "▼"
+		lbl.font_size = 96
+		lbl.modulate = Color(1, 0.92, 0.25)
+		lbl.outline_size = 12
+		lbl.outline_modulate = Color(0, 0, 0, 0.9)
+		lbl.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+		lbl.position = Vector3(0, 0, 0)
+		lbl.name = "ArrowLabel"
+		_turn_arrow.add_child(lbl)
+	_turn_arrow.name = "TurnArrow"
+	_turn_arrow.visible = false
+	add_child(_turn_arrow)
+
+func _update_turn_arrow(unit: Unit) -> void:
+	if _turn_arrow == null:
+		_ensure_turn_arrow()
+	if unit == null or unit.is_defeated():
+		_turn_arrow.visible = false
+		return
+	# reparent para a unidade da vez — voando acima da cabeça
+	if _turn_arrow.get_parent() != unit:
+		_turn_arrow.reparent(unit)
+	_turn_arrow.position = Vector3(0, 1.9, 0)
+	_turn_arrow.visible = true
+	# bobbing tween — seta 2D voando
+	if _arrow_tween:
+		_arrow_tween.kill()
+	_arrow_tween = create_tween()
+	_arrow_tween.set_loops()
+	_arrow_tween.tween_property(_turn_arrow, "position:y", 1.9 + 0.15, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_arrow_tween.tween_property(_turn_arrow, "position:y", 1.9, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 func _spawn_tiles() -> void:
 	_ensure_tile_mats()
@@ -110,13 +155,13 @@ func _spawn_tiles() -> void:
 			container.add_child(tile)
 
 func _spawn_units() -> void:
-	# Player units
+	# Player units — cores mais claras (não escuras) para distinguir do grid 0.82/0.68
 	for i in 2:
-		var u := _create_unit("Hero%d" % (i+1), 0, Vector2i(i, 0), Color(0.2, 0.6, 1))
+		var u := _create_unit("Hero%d" % (i+1), 0, Vector2i(i, 0), Color(0.35, 0.70, 1.0))
 		board.add_unit(u)
 	# Enemy units
 	for i in 2:
-		var u := _create_unit("Enemy%d" % (i+1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1, 0.3, 0.3))
+		var u := _create_unit("Enemy%d" % (i+1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1.0, 0.45, 0.45))
 		board.add_unit(u)
 
 func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
@@ -244,23 +289,16 @@ func _update_turn_label(unit: Unit) -> void:
 		var round: int = turn_manager.current_round if turn_manager else 1
 		label.text = "Turno: %s (T%d) R%d" % [unit.display_name, unit.team, round]
 		label.modulate = Color(0.2, 0.6, 1) if unit.team == 0 else Color(1, 0.4, 0.4)
-	# destaca unidade ativa
-	for u in board.units:
-		var vis: Node = u.get_node_or_null("Visual")
-		if vis and vis is MeshInstance3D:
-			var mat: StandardMaterial3D = (vis as MeshInstance3D).material_override as StandardMaterial3D
-			if mat:
-				mat.emission_enabled = (u == unit)
-				if u == unit:
-					mat.emission = Color(1, 0.9, 0.3)
-					mat.emission_energy_multiplier = 1.5
-				else:
-					mat.emission = Color(0, 0, 0)
-					mat.emission_energy_multiplier = 0.0
+	# seta 2D voando indica vez — sem dim amarelo (puro)
+	_update_turn_arrow(unit)
 
 func _on_battle_ended(winner: int) -> void:
 	print("[Battle] Vitória do time %d!" % winner)
 	_clear_highlights()
+	if _turn_arrow:
+		_turn_arrow.visible = false
+	if _arrow_tween:
+		_arrow_tween.kill()
 	EventBus.battle_requested.emit("victory_%d" % winner)
 	await get_tree().create_timer(1.5).timeout
 	if winner == 0:
