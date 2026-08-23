@@ -12,6 +12,8 @@ extends Node3D
 var _dragging: bool = false
 var _last_drag_pos: Vector2 = Vector2.ZERO
 var _active_touches: Dictionary = {} # index -> Vector2
+var _pinch_start_dist: float = 0.0
+var _pinch_start_size: float = 0.0
 
 func _ready() -> void:
 	if camera == null:
@@ -22,9 +24,33 @@ func _ready() -> void:
 					camera = child as Camera3D
 					break
 
+func _handle_pinch_fallback() -> void:
+	if _active_touches.size() != 2 or camera == null or camera.projection != Camera3D.PROJECTION_ORTHOGONAL:
+		return
+	var keys: Array = _active_touches.keys()
+	var p0: Vector2 = _active_touches[keys[0]]
+	var p1: Vector2 = _active_touches[keys[1]]
+	var cur_dist: float = p0.distance_to(p1)
+	if _pinch_start_dist == 0.0:
+		_pinch_start_dist = cur_dist
+		_pinch_start_size = camera.size
+		return
+	if cur_dist == 0 or _pinch_start_dist == 0:
+		return
+	var factor: float = cur_dist / _pinch_start_dist
+	# factor >1 = dedos afastando = zoom in (size diminui)
+	camera.size = clamp(_pinch_start_size / factor, min_size, max_size)
+
 func _unhandled_input(event: InputEvent) -> void:
 	# Drag só com 1 dedo — pan reto (corrige diagonal isométrica)
 	if event is InputEventScreenDrag:
+		# atualiza posições dos toques ativos para fallback pinch
+		if _active_touches.has(event.index):
+			_active_touches[event.index] = event.position
+		if _active_touches.size() == 2:
+			_handle_pinch_fallback()
+			get_viewport().set_input_as_handled()
+			return
 		# ignora drag do 2º dedo durante pinch (só 1 dedo pan)
 		if event.index != 0:
 			return
@@ -47,9 +73,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_active_touches[event.index] = event.position
 			_dragging = true
 			_last_drag_pos = event.position
+			if _active_touches.size() == 2:
+				# inicia pinch: registra distância inicial
+				var keys: Array = _active_touches.keys()
+				_pinch_start_dist = _active_touches[keys[0]].distance_to(_active_touches[keys[1]])
+				_pinch_start_size = camera.size if camera else 10.0
 		else:
 			_active_touches.erase(event.index)
 			_dragging = false
+			if _active_touches.size() < 2:
+				_pinch_start_dist = 0.0
 		return
 	elif event is InputEventMagnifyGesture:
 		if camera and camera.projection == Camera3D.PROJECTION_ORTHOGONAL:

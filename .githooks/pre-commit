@@ -1,0 +1,15 @@
+#!/bin/bash
+# Porta fechada no fluxo local — recusa commit se testes não passarem (rápido, <15s)
+set -e
+echo "pre-commit: style + file-coverage + contract+unit (rápido)"
+# style Tab (instant)
+if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>&1 | head -n 5; then
+  echo "pre-commit: indent com espaços, use Tab"
+  exit 1
+fi
+# file-coverage (instant)
+bash ci/check-file-coverage.sh 2>&1 | tail -n 5 || { echo "pre-commit: file-coverage falhou"; exit 1; }
+# contract+unit juntos (headless, ~5s) — integration fica para pre-push/CI para não travar commit
+godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/contract -gdir=res://tests/unit -gexit 2>&1 | tail -n 10 || { echo "pre-commit: contract/unit falhou"; exit 1; }
+echo "pre-commit: tudo verde, commit liberado"
+# Nota: integration + smoke+e2e rodam no pre-push e no CI, não aqui, para manter commit rápido
