@@ -55,3 +55,4 @@ godot --headless --export-release "Android" build.apk
 - Para IA gerar conteúdo: usar schema JSON documentado em `docs/TDD.md#schema-ia`.
 - Toda nova feature (habilidade, sistema, UI): testes `unit` (isolado, `new()` sem cena) + `integration` (completo `HUD+Combat+Board` com `watch_signals` e `await process_frame`) — CI bloqueia `contract/unit/integration/smoke` se falhar. Nunca só isolado.
 - Toda nova feature que muda design/arquitetura/estilo: atualizar `docs/GDD.md` + `docs/TDD.md` + `docs/STYLE.md` no mesmo PR — CI bloqueia se `systems/*.gd` ou `ui/*.gd` mudou e `docs/*.md` não mudou.
+- Finalização obrigatória: sempre fechar tarefa com `commit + resumo + TodoWrite completed` antes do `timeout` (<60s por `bash`), dividir `gut`/`export` em passos separados; nunca deixar `in_progress` exigindo `.` do usuário para terminar.
