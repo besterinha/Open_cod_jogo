@@ -22,33 +22,29 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 	if path.is_empty():
 		return false
 	board.update_occupancy(unit, old, target)
-	# lógica de célula imediata (para occupancy), animação de posição tween 0.35s
-	var start_pos: Vector3 = unit.position
-	var end_pos: Vector3 = board.grid.cell_to_world(target)
+	# ocupação imediata (consumidor board), animação tween 0.70 per-cell + 4-dir waypoints
+	var path_world: Array[Vector3] = []
+	for c in path:
+		path_world.append(board.grid.cell_to_world(c))
 	unit.cell = target
-	# sem árvore (teste unit new() isolado) -> teleporte instantâneo
 	if unit.get_tree() == null or not unit.is_inside_tree():
-		unit.position = end_pos
+		unit.position = path_world[-1]
 		unit.moved.emit(target)
 		return true
-	# Tween placeholder caminha 0.35s: slide + bob 0.08 + lean 5°
+	const SEC_PER_CELL: float = 0.35 * 2.0 # dobro: 0.70 por célula
 	var tw: Tween = unit.create_tween()
 	tw.set_parallel(false)
-	tw.tween_property(unit, "position", end_pos, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# bob paralelo (y)
+	# 4-dir waypoints: slide sequencial por célula (não linha reta diagonal)
+	for i in range(1, path_world.size()):
+		var nxt: Vector3 = path_world[i]
+		tw.tween_property(unit, "position", nxt, SEC_PER_CELL).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	# bob y em paralelo (mesmo tween, overlay)
 	var y_tw: Tween = unit.create_tween()
 	y_tw.set_parallel(false)
-	y_tw.tween_property(unit, "position:y", end_pos.y + 0.08, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	y_tw.tween_property(unit, "position:y", end_pos.y, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	# lean Visual 5° na direção
-	var vis: Node = unit.get_node_or_null("Visual")
-	if vis:
-		var dir: float = sign(end_pos.x - start_pos.x)
-		if dir == 0:
-			dir = sign(end_pos.z - start_pos.z)
-		var lean_tw: Tween = unit.create_tween()
-		lean_tw.tween_property(vis, "rotation:z", deg_to_rad(5.0 * dir), 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		lean_tw.tween_property(vis, "rotation:z", 0.0, 0.175).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	for i in range(1, path_world.size()):
+		var nxt_y: float = path_world[i].y
+		y_tw.tween_property(unit, "position:y", nxt_y + 0.08, SEC_PER_CELL * 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		y_tw.tween_property(unit, "position:y", nxt_y, SEC_PER_CELL * 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	tw.finished.connect(func() -> void: unit.moved.emit(target), CONNECT_ONE_SHOT)
 	return true
 

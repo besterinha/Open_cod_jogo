@@ -186,6 +186,12 @@ Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, 
 
 Conversor: `systems/common/json_to_resource.gd` (JSON -> Resource). IA nunca edita `systems/`, só `data/`.
 
+## 7b. Regra Input Real — Boundary Downstream (2026-08-23)
+Input → handler → estado seleção → sistema turno lido. Teste que `assert` só no emissor é `unidade isolada`; `integração input real` deve `assert` no **consumidor downstream** que lê o efeito (Board, Combat, Turn, HUD, EventBus). Critério: se componente tem consumidores conhecidos, `watch_signals(consumidor)` não `emissor`. Ver `tests/integration/template_input_real.gd` + `tests/integration/test_movement_4dir_input_real.gd`.
+
+## 4b. Movimento Tático — 4-dir + 0.70s per-cell
+`MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` (dobro 0.35) via `Tween` `SINE`, não linha reta. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info.
+
 ## 8. Validação & Testes — Pirâmide 70/25/5 (não só isolado)
 Ver `AGENTS.md` + `docs/STYLE.md`. Pirâmide: `70% Unit / 25% Integração / 5% Contrato+Smoke+E2E`.
 

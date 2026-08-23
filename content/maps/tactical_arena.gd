@@ -380,17 +380,27 @@ func _handle_tap(pos: Vector2) -> void:
 	if not board.grid.is_within_bounds(cell):
 		return
 	print("[Input] Tap %s" % cell)
+	# não atacar a si mesmo ao clicar no próprio tile (evita explosão)
+	if cell == unit.cell:
+		print("[Input] Tap próprio tile, ignora")
+		return
 	var target_unit: Unit = board.get_unit_at(cell)
-	if target_unit:
-		var abil: AbilityResource = selected_ability
-		if abil == null:
-			abil = load("res://data/abilities/strike.tres") as AbilityResource
-		if combat.use_ability(unit, abil, cell):
-			print("[Combat Touch] %s usou %s em %s" % [unit.display_name, abil.nome, cell])
-			turn_manager.end_turn()
+	# intenção ataque só se há inimigo + habilidade selecionada + can_use (consumidor Combat)
+	if target_unit and target_unit.team != unit.team and selected_ability != null:
+		if combat.can_use_ability(unit, selected_ability, cell):
+			if combat.use_ability(unit, selected_ability, cell):
+				print("[Combat Touch] %s usou %s em %s" % [unit.display_name, selected_ability.nome, cell])
+				turn_manager.end_turn()
+			else:
+				print("[Combat] Falha use_ability %s em %s" % [selected_ability.nome, cell])
 		else:
-			print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [abil.nome, cell, abil.custo])
-	elif board.is_walkable(cell) or cell == unit.cell:
+			print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [selected_ability.nome, cell, selected_ability.custo])
+		return
+	# se tem unidade (aliada ou sem habilidade), não explode — ignora ataque
+	if target_unit:
+		print("[Input] Unidade aliada/própria em %s, sem ataque (sem explosão)" % cell)
+		return
+	if board.is_walkable(cell):
 		if movement.can_move_to(unit, cell):
 			movement.move_unit(unit, cell)
 			print("[Move] %s -> %s" % [unit.display_name, cell])
