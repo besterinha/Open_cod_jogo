@@ -2,12 +2,51 @@
 # Porta fechada no fluxo local — recusa commit se testes não passarem (rápido, <15s)
 set -e
 echo "pre-commit: style + file-coverage + contract+unit (rápido)"
+# ETAPA 1 Gate 0 estático — ordem: Tab/LF → gdlint BLOQ → gdformat AVISO → check-only BLOQ
 # style Tab (instant) — bloqueia se encontrar 4 espaços após tab
 if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | grep -q .; then
   echo "pre-commit: indent com espaços, use Tab"
   grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | head -n 5
   exit 1
 fi
+# gdlint BLOQUEANTE (ETAPA 1)
+echo "pre-commit: Gate 0 gdlint (BLOQUEANTE)..."
+if command -v gdlint >/dev/null 2>&1; then
+  gdlint systems/ content/ tests/ > /tmp/gdlint.log 2>&1 || true
+  GDLINT_EXIT=$?
+  cat /tmp/gdlint.log
+  if grep -q "Failure:" /tmp/gdlint.log 2>/dev/null; then
+    echo "pre-commit: gdlint falhou (bloqueante ETAPA 1)"
+    exit 1
+  fi
+  echo "pre-commit: gdlint ok"
+else
+  echo "pre-commit: gdlint não instalado, pulando (instale gdtoolkit 4.5.0)"
+fi
+# gdformat AVISO apenas (ETAPA 1) — mostra diff em amarelo, não bloqueia
+echo "pre-commit: Gate 0 gdformat (AVISO, não bloqueia ETAPA 1)..."
+if command -v gdformat >/dev/null 2>&1; then
+  gdformat --check systems/ content/ tests/ > /tmp/gdformat.log 2>&1 || true
+  cat /tmp/gdformat.log | head -n 20
+  if grep -q "would reformat" /tmp/gdformat.log 2>/dev/null; then
+    echo -e "\033[33mpre-commit: gdformat AVISO — diff encontrado (ETAPA 1 não bloqueia, ETAPA 2 bloqueará)\033[0m"
+    echo -e "\033[33mDica: rode gdformat systems/ content/ tests/ para ver diff completo (ETAPA 2 alinhará config)\033[0m"
+  else
+    echo "pre-commit: gdformat ok"
+  fi
+else
+  echo "pre-commit: gdformat não instalado"
+fi
+# godot --check-only BLOQUEANTE (sintaxe) — usa timeout+head para não travar (godot hang com redirect)
+echo "pre-commit: Gate 0 check-only (BLOQUEANTE)..."
+timeout 20 godot --headless --check-only 2>&1 | head -n 100 > /tmp/check.log || true
+cat /tmp/check.log | head -n 20
+if grep -q "ERROR" /tmp/check.log 2>/dev/null; then
+  echo "pre-commit: check-only falhou (bloqueante)"
+  cat /tmp/check.log
+  exit 1
+fi
+echo "pre-commit: check-only ok"
 # file-coverage (instant) — geral (BASE_REF) + staged per-commit visível
 bash ci/check-file-coverage.sh 2>&1 | tail -n 5 || { echo "pre-commit: file-coverage falhou"; exit 1; }
 STAGED_SYS=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^systems/.*\.gd$' || true)

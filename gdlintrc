@@ -1,0 +1,15 @@
+# gdlintrc — ETAPA 1: gdlint BLOQUEANTE com regras alinhadas ao projeto atual
+# Desativa regras que conflitam com estilo/arquitetura existente (para não reprovar código correto)
+disable:
+  - max-line-length
+  - class-definitions-order
+  - unused-argument
+  - max-returns
+  - duplicated-load
+  - no-elif-return
+  - no-else-return
+  - function-name
+# Mantém bloqueantes úteis: trailing-whitespace, mixed-tabs-and-spaces, comparison-with-itself, etc.
+max-line-length: 100
+max-returns: 6
+tab-characters: 1
