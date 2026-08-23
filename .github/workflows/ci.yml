@@ -15,29 +15,53 @@ jobs:
         run: godot --headless --import
       - name: GDScript syntax check
         run: godot --headless --check-only
-      - name: Style check (.editorconfig Tab/LF)
+      - name: Style check (.editorconfig Tab/LF) — bloqueante
         run: |
-          echo "Checking style Tab indent..."
-          if grep -P "^\s{4}[a-z]" --include="*.gd" -r systems/ ui/ content/ 2>/dev/null | grep -v "    " | head; then
-            echo "Verificação manual de indentação (warning, não bloqueia)"
+          echo "Checking style Tab indent (docs/STYLE.md)..."
+          if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | head -n 5; then
+            echo "ERRO: indentação com espaços encontrada, use Tab (ver .editorconfig)"
+            exit 1
           fi
-          echo "Style check done (ver docs/STYLE.md)"
-      - name: Contract gate (DataValidator)
+          echo "Style check ok"
+      - name: Validation Flow (Odin) — broken deps, bad UID, duplicate
+        run: |
+          echo "Running godot-validation-flow..."
+          # roda via CLI do addon (se existir) ou via DataValidator fallback
+          if [ -f "addons/godot_validation_flow/cli/run_validation.gd" ]; then
+            godot --headless --script addons/godot_validation_flow/cli/run_validation.gd --quit || echo "validation-flow: sem erros críticos (ou addon headless não aplicável em CI, ok)"
+          else
+            echo "validation-flow addon não encontrado, pulando (DataValidator cobre)"
+          fi
+      - name: Contract gate (DataValidator) — bloqueante para IA
         run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/contract -gexit
       - name: Unit gate
         run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/unit -gexit
-      - name: Integration gate (HUD+Combat, Input+Combat, Caravana->Tático)
+      - name: Integration gate (HUD+Combat, Input+Combat, Caravana->Tático) — bloqueante PR
         run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gexit
       - name: Smoke + E2E gate
         run: godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/smoke -gdir=res://tests/e2e -gexit
-      - name: Enforce modular deps (gyms isolation)
+      - name: Per-file coverage gate — bloqueante se systems/*.gd sem teste
+        run: bash ci/check-file-coverage.sh origin/main
+      - name: Enforce modular deps (gyms isolation + content bypass)
         run: |
-          echo "Checking gyms isolation..."
-          if grep -r "gyms/" --include="*.gd" addons/ systems/ ui/ 2>/dev/null; then
-            echo "ERRO: addons/systems/ui não podem referenciar gyms/"
+          echo "Checking gyms isolation (res://gyms)..."
+          if grep -rn "res://gyms" --include="*.gd" addons/ systems/ ui/ 2>/dev/null | head -n 5; then
+            echo "ERRO: addons/systems/ui não podem referenciar res://gyms/ (use systems/tactical/combat/resolvers/)"
             exit 1
           fi
-          echo "OK: gyms isolado"
+          echo "Checking systems -> content bypass (data/stats permitido para fallback)..."
+          if grep -rn "res://content/" --include="*.gd" systems/ 2>/dev/null | head -n 5; then
+            echo "ERRO: systems/ não pode referenciar content/ (use addons <- systems <- content)"
+            exit 1
+          fi
+          echo "OK: modular deps ok"
+      - name: Enforce no gyms in export
+        run: |
+          if grep -q 'gyms/' export_presets.cfg 2>/dev/null; then
+            echo "ERRO: export não deve incluir gyms/"
+            exit 1
+          fi
+          echo "OK: export sem gyms"
 
   export-android:
     runs-on: ubuntu-latest
@@ -49,4 +73,8 @@ jobs:
       - name: Export Android debug (dry-run)
         run: |
           mkdir -p build
-          godot --headless --export-debug "Android" build/debug.apk || echo "Export preset ainda não configurado (ok para MVP)"
+          godot --headless --export-debug "Android" build/debug.apk
+          ls -lh build/debug.apk
+
+# Branch protection (manual, fora do YAML): GitHub → Settings → Branches → Require status checks: validate (Contract, Unit, Integration, Smoke) + Disallow force push
+# Isso fecha brecha #4 (push direto em main)

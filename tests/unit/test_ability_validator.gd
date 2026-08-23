@@ -7,6 +7,7 @@ func test_valid_ability_passes() -> void:
 	a.nome = "Teste"
 	a.alcance = 3
 	a.area = "single"
+	a.efeitos = [{"stat_id": "hp", "delta": -5}]
 	var errs: Array[String] = DataValidator.validate_ability(a)
 	assert_eq(errs.size(), 0, "Ability válida não deve ter erros: %s" % ", ".join(errs))
 

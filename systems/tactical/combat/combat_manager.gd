@@ -15,11 +15,9 @@ func setup(p_board: TacticalBoard, p_resolver: CombatResolver = null) -> void:
 	if p_resolver != null:
 		resolver = p_resolver
 	else:
-		# MVE genérico: hp_only puro (sem Banner Saga)
+		# MVE genérico: hp_only puro (sem Banner Saga) — sem referência a gyms/ (CI bloqueia)
 		if ResourceLoader.exists("res://systems/tactical/combat/resolvers/resolver_default.gd"):
 			resolver = load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
-		elif ResourceLoader.exists("res://gyms/resolvers/resolver_hp_only.gd"):
-			resolver = load("res://gyms/resolvers/resolver_hp_only.gd").new()
 		else:
 			resolver = CombatResolver.new()
 

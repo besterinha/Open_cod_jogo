@@ -31,6 +31,8 @@ static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Arr
 				errs.append("custo stat_id desconhecido: %s (defina em data/stats/*.tres)" % k)
 	var efeitos = res.get("efeitos") if "efeitos" in res else null
 	if efeitos is Array:
+		if efeitos.is_empty():
+			errs.append("efeitos vazio")
 		for e in efeitos:
 			if e is Dictionary:
 				var sid: String = str(e.get("stat_id", ""))
@@ -38,6 +40,30 @@ static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Arr
 					errs.append("efeito sem stat_id")
 				elif db != null and not db.is_valid_id(sid):
 					errs.append("efeito stat_id desconhecido: %s" % sid)
+				var delta: Variant = e.get("delta", null)
+				if delta == null or (int(delta) == 0 and str(delta) != "0"):
+					errs.append("efeito sem delta para %s" % sid)
+	var vfx = res.get("vfx") if "vfx" in res else null
+	if vfx != null and vfx is PackedScene:
+		# vfx é PackedScene já carregada — verifica se path existe via resource_path
+		var path: String = (vfx as PackedScene).resource_path
+		if path != "" and not ResourceLoader.exists(path):
+			errs.append("vfx PackedScene path inexistente: %s" % path)
+	var logic = res.get("logic_script") if "logic_script" in res else null
+	if logic != null and logic is GDScript:
+		var scr: GDScript = logic as GDScript
+		if scr.resource_path != "" and not ResourceLoader.exists(scr.resource_path):
+			errs.append("logic_script path inexistente: %s" % scr.resource_path)
+		# verifica se tem can_activate/activate (contrato IAbilityLogic)
+		var inst: Variant = null
+		var can_create: bool = true
+		# evita instanciar se script tem erro
+		if scr.can_instantiate():
+			inst = scr.new()
+			if inst and not inst.has_method("can_activate"):
+				errs.append("logic_script sem can_activate")
+			if inst and not inst.has_method("activate"):
+				errs.append("logic_script sem activate")
 	return errs
 
 static func validate_event(res: Resource) -> Array[String]:
