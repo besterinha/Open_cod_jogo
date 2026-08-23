@@ -12,8 +12,7 @@ func test_vertical_slice_journey_10_dias() -> void:
 	travel.travel(10)
 	assert_eq(caravan.day, 11, "10 dias viajados")
 	assert_eq(caravan.supplies, 20, "30-10 supplies")
-	# morale -10/dia, mas sem suprimento extra, 50-100 => 0? 50-10*10 = -50 => 0 clamp
-	assert_true(caravan.morale >= 0)
+	assert_eq(caravan.morale, 0, "50 -10*10 => 0 clamp")
 
 func test_e2e_combat_2v2_com_3_habilidades() -> void:
 	var board := TacticalBoard.new()

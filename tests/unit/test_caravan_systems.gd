@@ -70,6 +70,10 @@ func test_event_roll_and_apply() -> void:
 	var rolled: EventResource = es.roll_random("random")
 	assert_not_null(rolled)
 	var before_supplies: int = c.supplies
-	# primeira escolha dá renown, segunda tira supplies
+	var before_renown: int = c.renown
+	var before_morale: int = c.morale
+	# primeira escolha (Lutar) dá renown+5 morale+5
 	es.apply_choice(rolled, 0)
-	assert_true(c.renown >= 0 or c.supplies == before_supplies)
+	assert_eq(c.renown, before_renown + 5, "Lutar deve dar +5 renown")
+	assert_eq(c.morale, before_morale + 5, "Lutar deve dar +5 morale")
+	assert_eq(c.supplies, before_supplies, "Lutar não consome supplies")
