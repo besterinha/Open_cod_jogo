@@ -55,6 +55,19 @@ jobs:
             exit 1
           fi
           echo "OK: modular deps ok"
+      - name: Enforce docs atualizados se systems/ ou ui/ mudou — bloqueante
+        run: |
+          echo "Checking docs atualizados..."
+          CHANGED_SYS=$(git diff --name-only --diff-filter=AM origin/main...HEAD 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
+          CHANGED_DOCS=$(git diff --name-only --diff-filter=AM origin/main...HEAD 2>/dev/null | grep -E '^docs/.*\.md$' || true)
+          if [ -n "$CHANGED_SYS" ] && [ -z "$CHANGED_DOCS" ]; then
+            echo "ERRO: systems/*.gd ou ui/*.gd mudou mas docs/*.md não mudou"
+            echo "Atualize docs/GDD.md + docs/TDD.md + docs/STYLE.md no mesmo PR (AGENTS.md:56)"
+            echo "Arquivos mudados:"
+            echo "$CHANGED_SYS" | head -n 10
+            exit 1
+          fi
+          echo "OK: docs atualizados ou systems/ui não mudou"
       - name: Enforce no gyms in export
         run: |
           if grep -q 'gyms/' export_presets.cfg 2>/dev/null; then

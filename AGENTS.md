@@ -54,3 +54,4 @@ godot --headless --export-release "Android" build.apk
 - Toda nova habilidade/ação: criar em `gyms/` -> validar contrato -> mover para `data/` -> testes GUT + smoke -> CI bloqueia merge se falha.
 - Para IA gerar conteúdo: usar schema JSON documentado em `docs/TDD.md#schema-ia`.
 - Toda nova feature (habilidade, sistema, UI): testes `unit` (isolado, `new()` sem cena) + `integration` (completo `HUD+Combat+Board` com `watch_signals` e `await process_frame`) — CI bloqueia `contract/unit/integration/smoke` se falhar. Nunca só isolado.
+- Toda nova feature que muda design/arquitetura/estilo: atualizar `docs/GDD.md` + `docs/TDD.md` + `docs/STYLE.md` no mesmo PR — CI bloqueia se `systems/*.gd` ou `ui/*.gd` mudou e `docs/*.md` não mudou.
