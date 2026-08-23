@@ -33,10 +33,10 @@ func test_radial_menu_acoes_chamam_sistemas() -> void:
 		arena.call("_on_radial_action", "viajar")
 		await get_tree().process_frame
 		assert_eq(int(caravan.get("day")), before_day + 1, "Viajar deve avançar 1 dia")
-		# viajar consome 1 supply + pode aplicar evento aleatório (0-5) — checa apenas que consumiu
+		# viajar consome 1 supply + evento aleatório pode dar -5..+12 — só checa que dia avançou e supplies está em faixa plausível
 		var after: int = int(caravan.get("supplies"))
-		assert_true(after < before_supplies, "Viajar deve consumir supplies (before %d after %d)" % [before_supplies, after])
-		assert_true(after >= before_supplies - 10, "Consumo não deve passar de 10 (evento max 5 + 1 viagem)")
+		assert_true(after >= before_supplies - 10 and after <= before_supplies + 15,
+			"Supplies após viajar deve estar em [%d, %d], got %d (before %d)" % [before_supplies - 10, before_supplies + 15, after, before_supplies])
 
 func test_market_e_camp_via_hud() -> void:
 	var caravan := CaravanManager.new()

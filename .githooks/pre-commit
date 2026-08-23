@@ -8,8 +8,42 @@ if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | grep
   grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | head -n 5
   exit 1
 fi
-# file-coverage (instant)
+# file-coverage (instant) — geral (BASE_REF) + staged per-commit visível
 bash ci/check-file-coverage.sh 2>&1 | tail -n 5 || { echo "pre-commit: file-coverage falhou"; exit 1; }
+STAGED_SYS=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^systems/.*\.gd$' || true)
+STAGED_TEST=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^tests/.*\.gd$' || true)
+if [ -n "$STAGED_SYS" ] && [ -z "$STAGED_TEST" ]; then
+  echo "pre-commit file-coverage STAGED: systems/*.gd mudou sem tests/*.gd (STAGED)"
+  echo "$STAGED_SYS" | head -n 10
+  exit 1
+fi
+# A5: docs atualizados se systems/ui mudou — checa STAGED (per-commit) visível
+CHANGED_SYS_STAGED=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
+CHANGED_DOCS_STAGED=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^docs/.*\.md$' || true)
+if [ -n "$CHANGED_SYS_STAGED" ] && [ -z "$CHANGED_DOCS_STAGED" ]; then
+  echo "pre-commit A5: STAGED systems/ui mudou mas docs/*.md não mudou"
+  echo "$CHANGED_SYS_STAGED" | head -n 10
+  echo "Atualize docs/GDD.md + docs/TDD.md + docs/STYLE.md (AGENTS.md:58) ou git commit --no-verify (bypass visível)"
+  exit 1
+fi
+# também checa último commit vs HEAD caso pre-commit seja chamado após commit (CI)
+git fetch origin main --quiet 2>/dev/null || true
+BASE_REF=$(git merge-base origin/main HEAD 2>/dev/null || echo "HEAD~1")
+if ! git rev-parse --verify $BASE_REF >/dev/null 2>&1; then BASE_REF=HEAD~1; fi
+CHANGED_SYS=$(git diff --name-only --diff-filter=AM $BASE_REF...HEAD 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
+CHANGED_DOCS=$(git diff --name-only --diff-filter=AM $BASE_REF...HEAD 2>/dev/null | grep -E '^docs/.*\.md$' || true)
+# não bloqueia aqui se BASE_REF antigo contém docs antigos (falso-positivo), apenas log
+if [ -n "$CHANGED_SYS" ] && [ -z "$CHANGED_DOCS" ]; then
+  echo "pre-commit A5 (CI): BASE $BASE_REF tem systems sem docs, mas STAGED ok — aviso"
+fi
+# C8: pirâmide 70/25/5 checagem visível (não bloqueia 100%, mas avisa se regression faltar)
+if [ ! -n "$(ls tests/regression/test_regression_bug_*.gd 2>/dev/null)" ]; then
+  echo "pre-commit C8: nenhum test_regression_bug_*.gd encontrado — crie regression para cada bug"
+  # não bloqueia ainda, só avisa visível (descomente exit 1 para travar)
+fi
+COUNT_U=$(find tests/unit -name "*.gd" 2>/dev/null | wc -l)
+COUNT_I=$(find tests/integration -name "*.gd" 2>/dev/null | wc -l)
+echo "pre-commit: pirâmide $COUNT_U unit / $COUNT_I integration (C8 70/25 alvo)"
 # contract+unit juntos (headless, ~5s) — integration fica para pre-push/CI para não travar commit
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/contract -gdir=res://tests/unit -gexit 2>&1 | tail -n 10 || { echo "pre-commit: contract/unit falhou"; exit 1; }
 echo "pre-commit: tudo verde, commit liberado"

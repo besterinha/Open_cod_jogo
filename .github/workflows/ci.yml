@@ -26,9 +26,8 @@ jobs:
       - name: Validation Flow (Odin) — broken deps, bad UID, duplicate
         run: |
           echo "Running godot-validation-flow..."
-          # roda via CLI do addon (se existir) ou via DataValidator fallback
           if [ -f "addons/godot_validation_flow/cli/run_validation.gd" ]; then
-            godot --headless --script addons/godot_validation_flow/cli/run_validation.gd --quit || echo "validation-flow: sem erros críticos (ou addon headless não aplicável em CI, ok)"
+            godot --headless --script addons/godot_validation_flow/cli/run_validation.gd --quit
           else
             echo "validation-flow addon não encontrado, pulando (DataValidator cobre)"
           fi
@@ -57,17 +56,28 @@ jobs:
           echo "OK: modular deps ok"
       - name: Enforce docs atualizados se systems/ ou ui/ mudou — bloqueante
         run: |
-          echo "Checking docs atualizados..."
-          CHANGED_SYS=$(git diff --name-only --diff-filter=AM origin/main...HEAD 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
-          CHANGED_DOCS=$(git diff --name-only --diff-filter=AM origin/main...HEAD 2>/dev/null | grep -E '^docs/.*\.md$' || true)
+          echo "Checking docs atualizados (per-commit HEAD~1 + merge-base)..."
+          # Per-commit estrito: último commit deve ter docs se mexeu em systems/ui
+          CHANGED_SYS_HEAD=$(git diff --name-only --diff-filter=AM HEAD~1...HEAD 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
+          CHANGED_DOCS_HEAD=$(git diff --name-only --diff-filter=AM HEAD~1...HEAD 2>/dev/null | grep -E '^docs/.*\.md$' || true)
+          if [ -n "$CHANGED_SYS_HEAD" ] && [ -z "$CHANGED_DOCS_HEAD" ]; then
+            echo "ERRO: HEAD~1..HEAD systems/ui mudou mas docs não mudou (per-commit A5)"
+            echo "$CHANGED_SYS_HEAD" | head -n 10
+            exit 1
+          fi
+          # PR overall: merge-base para garantir PR inteiro tem docs
+          git fetch origin main --quiet 2>/dev/null || true
+          BASE_REF=$(git merge-base origin/main HEAD 2>/dev/null || echo "HEAD~1")
+          if ! git rev-parse --verify $BASE_REF >/dev/null 2>&1; then BASE_REF=HEAD~1; fi
+          echo "BASE_REF=$BASE_REF...HEAD (PR)"
+          CHANGED_SYS=$(git diff --name-only --diff-filter=AM $BASE_REF...HEAD 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
+          CHANGED_DOCS=$(git diff --name-only --diff-filter=AM $BASE_REF...HEAD 2>/dev/null | grep -E '^docs/.*\.md$' || true)
           if [ -n "$CHANGED_SYS" ] && [ -z "$CHANGED_DOCS" ]; then
-            echo "ERRO: systems/*.gd ou ui/*.gd mudou mas docs/*.md não mudou"
-            echo "Atualize docs/GDD.md + docs/TDD.md + docs/STYLE.md no mesmo PR (AGENTS.md:56)"
-            echo "Arquivos mudados:"
+            echo "ERRO: PR systems/ui mudou mas docs não mudou (AGENTS.md:58)"
             echo "$CHANGED_SYS" | head -n 10
             exit 1
           fi
-          echo "OK: docs atualizados ou systems/ui não mudou"
+          echo "OK: docs atualizados"
       - name: Enforce no gyms in export
         run: |
           if grep -q 'gyms/' export_presets.cfg 2>/dev/null; then

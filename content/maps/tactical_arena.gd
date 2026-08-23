@@ -19,6 +19,9 @@ var _turn_arrow: Node3D = null
 var _arrow_tween: Tween = null
 var _touch_start: Vector2 = Vector2.ZERO
 var _is_drag: bool = false
+var _long_press_index: int = -1
+var _long_press_pos: Vector2 = Vector2.ZERO
+var _long_press_handled: bool = false
 
 func _ready() -> void:
 	# StatsRegistry (se existir)
@@ -395,16 +398,64 @@ func _handle_tap(pos: Vector2) -> void:
 		else:
 			print("[Move] Não pode mover para %s" % cell)
 
+func _show_unit_info(pos: Vector2) -> void:
+	var cam: Camera3D = get_node_or_null("CameraRig/Camera3D") as Camera3D
+	if cam == null:
+		cam = get_node_or_null("Camera3D") as Camera3D
+	if cam == null:
+		return
+	var from: Vector3 = cam.project_ray_origin(pos)
+	var dir: Vector3 = cam.project_ray_normal(pos)
+	if dir.y == 0:
+		return
+	var t: float = -from.y / dir.y
+	var hit: Vector3 = from + dir * t
+	var cell: Vector2i = board.grid.world_to_cell(hit)
+	var unit: Unit = board.get_unit_at(cell)
+	if unit:
+		print("[LongPress] %s | %s | HP:%d | Team %d" % [unit.display_name, unit.cell, unit.get_stat("hp"), unit.team])
+		# feedback visual rápido (Label3D info)
+		var lbl := Label3D.new()
+		lbl.text = "%s\nHP:%d\n%s" % [unit.display_name, unit.get_stat("hp"), unit.cell]
+		lbl.modulate = Color(1, 1, 0.6)
+		lbl.outline_size = 10
+		lbl.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+		lbl.position = unit.position + Vector3(0, 2.0, 0)
+		add_child(lbl)
+		var tw: Tween = create_tween()
+		tw.tween_property(lbl, "modulate:a", 0.0, 1.2)
+		tw.tween_callback(func() -> void: lbl.queue_free())
+	else:
+		print("[LongPress] vazio em %s" % cell)
+
 func _unhandled_input(event: InputEvent) -> void:
 	# Pinch zoom — deixa CameraRig lidar, não marca drag
 	if event is InputEventMagnifyGesture:
 		return
-	# Touch drag vs tap (threshold 10px) — evita conflito com CameraRig pan
+	# Touch drag vs tap + long-press (0.6s) (C6)
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			_touch_start = event.position
 			_is_drag = false
+			_long_press_handled = false
+			_long_press_index = event.index
+			_long_press_pos = event.position
+			# timer long-press 0.6s
+			var idx: int = event.index
+			var pos: Vector2 = event.position
+			get_tree().create_timer(0.6).timeout.connect(func() -> void:
+				if _long_press_index == idx and not _is_drag and not _long_press_handled:
+					if _touch_start.distance_to(pos) < 10.0:
+						_long_press_handled = true
+						_show_unit_info(pos)
+			)
 		else:
+			if _long_press_index == event.index:
+				_long_press_index = -1
+			if _long_press_handled:
+				_long_press_handled = false
+				_is_drag = false
+				return
 			# release — só considera tap se não arrastou
 			if not _is_drag and _touch_start.distance_to(event.position) < 10.0:
 				_handle_tap(event.position)
