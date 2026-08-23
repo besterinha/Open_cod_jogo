@@ -92,10 +92,12 @@ var _dark_mat: StandardMaterial3D = null
 func _ensure_tile_mats() -> void:
 	if _light_mat == null:
 		_light_mat = StandardMaterial3D.new()
-		_light_mat.albedo_color = Color(0.82, 0.80, 0.76)
+		_light_mat.albedo_color = Color(0.96, 0.96, 0.96)
+		_light_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	if _dark_mat == null:
 		_dark_mat = StandardMaterial3D.new()
-		_dark_mat.albedo_color = Color(0.68, 0.66, 0.62)
+		_dark_mat.albedo_color = Color(0.86, 0.86, 0.86)
+		_dark_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 
 func _ensure_turn_arrow() -> void:
 	if _turn_arrow != null:
@@ -155,13 +157,13 @@ func _spawn_tiles() -> void:
 			container.add_child(tile)
 
 func _spawn_units() -> void:
-	# Player units — cores mais claras (não escuras) para distinguir do grid 0.82/0.68
+	# Player units — pastel unshaded máxima visibilidade (Redmi)
 	for i in 2:
-		var u := _create_unit("Hero%d" % (i+1), 0, Vector2i(i, 0), Color(0.35, 0.70, 1.0))
+		var u := _create_unit("Hero%d" % (i+1), 0, Vector2i(i, 0), Color(0.60, 0.85, 1.0))
 		board.add_unit(u)
 	# Enemy units
 	for i in 2:
-		var u := _create_unit("Enemy%d" % (i+1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1.0, 0.45, 0.45))
+		var u := _create_unit("Enemy%d" % (i+1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1.0, 0.60, 0.60))
 		board.add_unit(u)
 
 func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
@@ -184,6 +186,7 @@ func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
 	body_mesh.mesh = cap
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = col
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	body_mesh.material_override = mat
 	body_mesh.name = "Visual"
 	unit.add_child(body_mesh)
