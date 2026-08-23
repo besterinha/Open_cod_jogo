@@ -1,6 +1,7 @@
 extends GutTest
 # Integração Input -> Combat via _handle_tap raycast
 
+
 func test_tap_em_inimigo_dispara_combate() -> void:
 	# Teste isolado sem depender do arena default (que tem inimigos longe)
 	var board := TacticalBoard.new()
@@ -20,7 +21,7 @@ func test_tap_em_inimigo_dispara_combate() -> void:
 	enemy.unit_id = "enemy"
 	enemy.display_name = "Enemy"
 	enemy.team = 1
-	enemy.cell = Vector2i(0, 1) # ao lado, alcance 1
+	enemy.cell = Vector2i(0, 1)  # ao lado, alcance 1
 	enemy.stats = UnitStats.new()
 	enemy.stats.set_stat("hp", 10)
 	board.add_unit(enemy)
@@ -34,6 +35,7 @@ func test_tap_em_inimigo_dispara_combate() -> void:
 	assert_true(ok)
 	assert_signal_emitted(cm, "damage_applied")
 	assert_eq(enemy.get_stat("hp"), before_hp - 4)
+
 
 func test_tap_fora_alcance_nao_consume() -> void:
 	var b := TacticalBoard.new()
@@ -61,10 +63,10 @@ func test_tap_fora_alcance_nao_consume() -> void:
 	var cm := CombatManager.new()
 	cm.setup(b)
 	add_child_autofree(cm)
-	var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource # alc 1
+	var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource  # alc 1
 	var before_wp: int = atk.get_stat("willpower")
 	watch_signals(cm)
-	var ok: bool = cm.use_ability(atk, abil, def.cell) # longe
+	var ok: bool = cm.use_ability(atk, abil, def.cell)  # longe
 	assert_false(ok, "fora do alcance não deve usar")
 	assert_signal_not_emitted(cm, "ability_used")
 	assert_eq(atk.get_stat("willpower"), before_wp, "sem custo se falhou")

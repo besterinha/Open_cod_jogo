@@ -23,19 +23,19 @@ if command -v gdlint >/dev/null 2>&1; then
 else
   echo "pre-commit: gdlint não instalado, pulando (instale gdtoolkit 4.5.0)"
 fi
-# gdformat AVISO apenas (ETAPA 1) — mostra diff em amarelo, não bloqueia
-echo "pre-commit: Gate 0 gdformat (AVISO, não bloqueia ETAPA 1)..."
+# gdformat BLOQUEANTE (ETAPA 2) — alinhado com docs/STYLE.md Tab, base zerada
+echo "pre-commit: Gate 0 gdformat (BLOQUEANTE ETAPA 2)..."
 if command -v gdformat >/dev/null 2>&1; then
   gdformat --check systems/ content/ tests/ > /tmp/gdformat.log 2>&1 || true
   cat /tmp/gdformat.log | head -n 20
   if grep -q "would reformat" /tmp/gdformat.log 2>/dev/null; then
-    echo -e "\033[33mpre-commit: gdformat AVISO — diff encontrado (ETAPA 1 não bloqueia, ETAPA 2 bloqueará)\033[0m"
-    echo -e "\033[33mDica: rode gdformat systems/ content/ tests/ para ver diff completo (ETAPA 2 alinhará config)\033[0m"
-  else
-    echo "pre-commit: gdformat ok"
+    echo "pre-commit: gdformat BLOQUEOU (ETAPA 2) — diff encontrado, rode gdformat para corrigir"
+    cat /tmp/gdformat.log
+    exit 1
   fi
+  echo "pre-commit: gdformat ok"
 else
-  echo "pre-commit: gdformat não instalado"
+  echo "pre-commit: gdformat não instalado, pulando"
 fi
 # godot --check-only BLOQUEANTE (sintaxe) — usa timeout+head para não travar (godot hang com redirect)
 echo "pre-commit: Gate 0 check-only (BLOQUEANTE)..."

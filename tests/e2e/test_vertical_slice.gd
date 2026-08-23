@@ -1,6 +1,7 @@
 extends GutTest
 # E2E: Jornada 10 dias -> Evento -> Combate 2v2 -> Vitória -> Save
 
+
 func test_vertical_slice_journey_10_dias() -> void:
 	var caravan := CaravanManager.new()
 	caravan.supplies = 30
@@ -13,6 +14,7 @@ func test_vertical_slice_journey_10_dias() -> void:
 	assert_eq(caravan.day, 11, "10 dias viajados")
 	assert_eq(caravan.supplies, 20, "30-10 supplies")
 	assert_eq(caravan.morale, 0, "50 -10*10 => 0 clamp")
+
 
 func test_e2e_combat_2v2_com_3_habilidades() -> void:
 	var board := TacticalBoard.new()
@@ -36,9 +38,9 @@ func test_e2e_combat_2v2_com_3_habilidades() -> void:
 		e.unit_id = "enemy%d" % i
 		e.display_name = "Enemy%d" % i
 		e.team = 1
-		e.cell = Vector2i(0 + i, 1) # (0,1) e (1,1) ao lado dos heroes (0,0) e (1,0)
+		e.cell = Vector2i(0 + i, 1)  # (0,1) e (1,1) ao lado dos heroes (0,0) e (1,0)
 		e.stats = UnitStats.new()
-		e.stats.set_stat("hp", 4) # strike mata em 1 hit
+		e.stats.set_stat("hp", 4)  # strike mata em 1 hit
 		board.add_unit(e)
 	var cm := CombatManager.new()
 	cm.setup(board)
@@ -60,14 +62,21 @@ func test_e2e_combat_2v2_com_3_habilidades() -> void:
 	assert_true(cm.use_ability(hero, heal, ally.cell))
 	assert_eq(ally.get_stat("hp"), 7)
 	# fireball 3x3 no segundo inimigo
-	var enemy2: Unit = board.get_units_by_team(1)[0] # agora só 1 vivo
+	var enemy2: Unit = board.get_units_by_team(1)[0]  # agora só 1 vivo
 	if enemy2:
 		enemy2.stats.set_stat("hp", 10)
 		assert_true(cm.use_ability(hero, fireball, enemy2.cell))
 		assert_eq(enemy2.get_stat("hp"), 4, "fireball -6")
 
+
 func test_e2e_save_apos_vitoria() -> void:
-	var data: Dictionary = {"day": 11, "supplies": 20, "morale": 30, "renown": 5, "pop": {"clansmen": 90, "fighters": 20, "varl": 5}}
+	var data: Dictionary = {
+		"day": 11,
+		"supplies": 20,
+		"morale": 30,
+		"renown": 5,
+		"pop": {"clansmen": 90, "fighters": 20, "varl": 5}
+	}
 	SaveSystem.set_data(data)
 	assert_true(SaveSystem.save())
 	assert_true(SaveSystem.load_save())

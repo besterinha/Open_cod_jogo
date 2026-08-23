@@ -1,6 +1,7 @@
 extends GutTest
 # Integração: Board + CameraRig + Input (completo HUD+Combat+Board para câmera)
 
+
 func test_camera_pan_1_dedo_move() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
 	add_child_autofree(arena)
@@ -18,6 +19,7 @@ func test_camera_pan_1_dedo_move() -> void:
 	rig._unhandled_input(drag)
 	await get_tree().process_frame
 	assert_ne(rig.position, before, "drag 1 dedo deve mover câmera")
+
 
 func test_camera_pincha_zoom_muda_size() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
@@ -37,6 +39,7 @@ func test_camera_pincha_zoom_muda_size() -> void:
 	assert_ne(cam.size, before, "pinch deve mudar size")
 	assert_true(cam.size >= rig.min_size and cam.size <= rig.max_size)
 
+
 func test_camera_2_dedos_nao_pan() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
 	add_child_autofree(arena)
@@ -54,6 +57,7 @@ func test_camera_2_dedos_nao_pan() -> void:
 	rig._unhandled_input(drag)
 	await get_tree().process_frame
 	assert_eq(rig.position, before, "com 2 dedos pan deve ser bloqueado")
+
 
 func test_highlight_limpa_ao_trocar_turno() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D

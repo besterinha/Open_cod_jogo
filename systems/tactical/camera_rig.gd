@@ -11,9 +11,10 @@ extends Node3D
 
 var _dragging: bool = false
 var _last_drag_pos: Vector2 = Vector2.ZERO
-var _active_touches: Dictionary = {} # index -> Vector2
+var _active_touches: Dictionary = {}  # index -> Vector2
 var _pinch_start_dist: float = 0.0
 var _pinch_start_size: float = 0.0
+
 
 func _ready() -> void:
 	if camera == null:
@@ -24,8 +25,13 @@ func _ready() -> void:
 					camera = child as Camera3D
 					break
 
+
 func _handle_pinch_fallback() -> void:
-	if _active_touches.size() != 2 or camera == null or camera.projection != Camera3D.PROJECTION_ORTHOGONAL:
+	if (
+		_active_touches.size() != 2
+		or camera == null
+		or camera.projection != Camera3D.PROJECTION_ORTHOGONAL
+	):
 		return
 	var keys: Array = _active_touches.keys()
 	var p0: Vector2 = _active_touches[keys[0]]
@@ -40,6 +46,7 @@ func _handle_pinch_fallback() -> void:
 	var factor: float = cur_dist / _pinch_start_dist
 	# factor >1 = dedos afastando = zoom in (size diminui)
 	camera.size = clamp(_pinch_start_size / factor, min_size, max_size)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Drag só com 1 dedo — pan reto (corrige diagonal isométrica)
@@ -108,8 +115,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			if camera and camera.projection == Camera3D.PROJECTION_ORTHOGONAL:
 				camera.size = clamp(camera.size + 0.5, min_size, max_size)
 
+
 func _get_touch_count() -> int:
 	return _active_touches.size()
+
 
 func _clamp_position() -> void:
 	# limita rig para não sair muito do grid 8x8 (world 0-8), escala com zoom

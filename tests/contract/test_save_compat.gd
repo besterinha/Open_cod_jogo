@@ -1,5 +1,6 @@
 extends GutTest
 
+
 func test_fixture_v01_loads() -> void:
 	var path: String = "res://tests/fixtures/saves/v0.1.sav"
 	assert_true(FileAccess.file_exists(path), "fixture v0.1.sav deve existir")
@@ -13,10 +14,17 @@ func test_fixture_v01_loads() -> void:
 	assert_true(dict.has("supplies"))
 	assert_true(dict.has("pop"))
 
+
 func test_save_round_trip() -> void:
 	var save := SaveSystem
 	# cria dados de teste
-	var data: Dictionary = {"day": 5, "supplies": 12, "morale": 70, "renown": 3, "pop": {"clansmen": 90, "fighters": 20, "varl": 5}}
+	var data: Dictionary = {
+		"day": 5,
+		"supplies": 12,
+		"morale": 70,
+		"renown": 3,
+		"pop": {"clansmen": 90, "fighters": 20, "varl": 5}
+	}
 	save.set_data(data)
 	assert_true(save.save(), "save() deve escrever user://save.json")
 	assert_true(save.load_save(), "load_save() deve ler de volta")

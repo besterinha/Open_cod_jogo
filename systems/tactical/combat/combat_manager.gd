@@ -5,10 +5,11 @@ extends Node
 
 var board: TacticalBoard
 var resolver: CombatResolver
-var stats_registry: Node # StatsRegistry autoload opcional
+var stats_registry: Node  # StatsRegistry autoload opcional
 
 signal ability_used(user: Unit, ability: AbilityResource, targets: Array[Vector2i])
 signal damage_applied(target: Unit, effects: Array)
+
 
 func setup(p_board: TacticalBoard, p_resolver: CombatResolver = null) -> void:
 	board = p_board
@@ -21,6 +22,7 @@ func setup(p_board: TacticalBoard, p_resolver: CombatResolver = null) -> void:
 		else:
 			resolver = CombatResolver.new()
 
+
 func can_use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) -> bool:
 	if user.is_defeated():
 		return false
@@ -32,6 +34,7 @@ func can_use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i
 	if dist > ability.alcance:
 		return false
 	return ability.can_activate(user, target_cell)
+
 
 func get_area_cells(origin: Vector2i, area: String) -> Array[Vector2i]:
 	match area:
@@ -47,7 +50,7 @@ func get_area_cells(origin: Vector2i, area: String) -> Array[Vector2i]:
 			return out
 		"cross":
 			var out: Array[Vector2i] = [origin]
-			for d in [Vector2i(1,0), Vector2i(-1,0), Vector2i(0,1), Vector2i(0,-1)]:
+			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 				var c: Vector2i = origin + d
 				if board.grid.is_within_bounds(c):
 					out.append(c)
@@ -62,6 +65,7 @@ func get_area_cells(origin: Vector2i, area: String) -> Array[Vector2i]:
 			return out
 		_:
 			return [origin]
+
 
 func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) -> bool:
 	if not can_use_ability(user, ability, target_cell):
@@ -84,7 +88,11 @@ func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) ->
 			continue
 		# permite curar a si mesmo (heal) mas não dano amigo? Para MVE genérico, permite tudo exceto curar inimigo com heal positivo?
 		# Simplificado MVE: permite qualquer alvo, resolver decide delta
-		if target == user and ability.efeitos.size() > 0 and int(ability.efeitos[0].get("delta", 0)) < 0:
+		if (
+			target == user
+			and ability.efeitos.size() > 0
+			and int(ability.efeitos[0].get("delta", 0)) < 0
+		):
 			# não se auto-dane com fireball/strike se mirar em si
 			continue
 		var result: Dictionary = resolver.resolve(user.stats, target.stats, ability, db)

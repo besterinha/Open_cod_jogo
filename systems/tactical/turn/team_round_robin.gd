@@ -3,9 +3,10 @@ extends TurnManager
 # Default plugável: times alternam, cada unidade do time age uma vez por round.
 # Ex: Team0: A,B -> Team1: X,Y -> round++
 
-var _team_turn: int = 0 # 0 ou 1
+var _team_turn: int = 0  # 0 ou 1
 var _unit_idx: int = 0
 var _team_units: Array[Unit] = []
+
 
 func _next_turn() -> void:
 	if board == null:
@@ -24,6 +25,7 @@ func _next_turn() -> void:
 	_unit_idx += 1
 	turn_started.emit(_current_unit)
 	EventBus.turn_changed.emit(_current_unit)
+
 
 func _switch_team() -> void:
 	_team_turn = 1 if _team_turn == 0 else 0

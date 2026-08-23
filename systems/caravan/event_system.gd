@@ -8,19 +8,24 @@ var _events: Array[EventResource] = []
 signal event_rolled(event: EventResource)
 signal choice_applied(event: EventResource, choice: EventChoice)
 
+
 func setup(p_caravan: CaravanManager) -> void:
 	caravan = p_caravan
+
 
 func register_event(ev: EventResource) -> void:
 	if ev != null and ev.is_valid():
 		_events.append(ev)
 
+
 func register_events(arr: Array[EventResource]) -> void:
 	for e in arr:
 		register_event(e)
 
+
 func clear_events() -> void:
 	_events.clear()
+
 
 func load_from_data(path: String = "res://data/events/") -> void:
 	# Carrega todos .tres em data/events/
@@ -36,6 +41,7 @@ func load_from_data(path: String = "res://data/events/") -> void:
 				register_event(ev as EventResource)
 		file = dir.get_next()
 	dir.list_dir_end()
+
 
 func roll_random(trigger_filter: String = "random") -> EventResource:
 	var pool: Array[EventResource] = []
@@ -55,6 +61,7 @@ func roll_random(trigger_filter: String = "random") -> EventResource:
 			EventBus.event_triggered.emit(ev.id)
 			return ev
 	return pool.back()
+
 
 func apply_choice(ev: EventResource, choice_idx: int) -> bool:
 	if ev == null or choice_idx < 0 or choice_idx >= ev.escolhas.size():

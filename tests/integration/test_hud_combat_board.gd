@@ -1,12 +1,14 @@
 extends GutTest
 # Integração: HUD + Combat + Board + Stats — pega HUD 0 vs lógica 3 e VFX sem dano
 
+
 func _make_board() -> TacticalBoard:
 	var b := TacticalBoard.new()
 	b.grid_size = Vector2i(5, 5)
 	b.grid = GridSystem.new(Vector2i(5, 5), 1.0)
 	add_child_autofree(b)
 	return b
+
 
 func _make_unit(id: String, team: int, cell: Vector2i, hp: int = 10) -> Unit:
 	var u := Unit.new()
@@ -20,13 +22,14 @@ func _make_unit(id: String, team: int, cell: Vector2i, hp: int = 10) -> Unit:
 	u.stats.set_stat("movement", 3)
 	return u
 
+
 func test_hud_and_logic_agree_on_cost() -> void:
 	# HUD deve desabilitar se lógica não pode pagar
 	var b := _make_board()
-	var atk := _make_unit("atk", 0, Vector2i(0,0))
-	atk.stats.set_stat("willpower", 1) # só 1
+	var atk := _make_unit("atk", 0, Vector2i(0, 0))
+	atk.stats.set_stat("willpower", 1)  # só 1
 	b.add_unit(atk)
-	var abil: AbilityResource = load("res://data/abilities/fireball.tres") as AbilityResource # custa 2
+	var abil: AbilityResource = load("res://data/abilities/fireball.tres") as AbilityResource  # custa 2
 	assert_false(atk.can_pay(abil.custo), "lógica: não pode pagar 2 com 1")
 	# HUD simula disabled
 	var hud := preload("res://ui/tactical_hud.tscn").instantiate() as Control
@@ -41,14 +44,17 @@ func test_hud_and_logic_agree_on_cost() -> void:
 	if fire_btn:
 		assert_true(fire_btn.disabled, "HUD fireball deve ficar disabled sem willpower")
 
+
 func test_vfx_and_damage_atomicos() -> void:
 	var b := _make_board()
-	var atk := _make_unit("atk", 0, Vector2i(0,0))
-	var def := _make_unit("def", 1, Vector2i(1,0), 10)
+	var atk := _make_unit("atk", 0, Vector2i(0, 0))
+	var def := _make_unit("def", 1, Vector2i(1, 0), 10)
 	b.add_unit(atk)
 	b.add_unit(def)
 	var cm := CombatManager.new()
-	var resolver: CombatResolver = load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
+	var resolver: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
+	)
 	cm.setup(b, resolver)
 	add_child_autofree(cm)
 	var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource
@@ -60,10 +66,11 @@ func test_vfx_and_damage_atomicos() -> void:
 	assert_signal_emitted(cm, "damage_applied")
 	assert_eq(def.get_stat("hp"), 6, "strike -4 em 10 => 6 (hp_only)")
 
+
 func test_vfx_sem_dano_deve_falhar() -> void:
 	# Tap em chão vazio com fireball 3x3 deve dar VFX e dano se inimigo na área, mas se área vazia, sem VFX e sem dano
 	var b := _make_board()
-	var atk := _make_unit("atk", 0, Vector2i(0,0))
+	var atk := _make_unit("atk", 0, Vector2i(0, 0))
 	b.add_unit(atk)
 	# sem inimigos na área
 	var cm := CombatManager.new()
@@ -71,23 +78,26 @@ func test_vfx_sem_dano_deve_falhar() -> void:
 	add_child_autofree(cm)
 	var abil: AbilityResource = load("res://data/abilities/fireball.tres") as AbilityResource
 	watch_signals(cm)
-	var ok: bool = cm.use_ability(atk, abil, Vector2i(2,2)) # chão vazio, sem alvo
+	var ok: bool = cm.use_ability(atk, abil, Vector2i(2, 2))  # chão vazio, sem alvo
 	# VFX emitida (ability_used) mas damage_applied não deve ter sido emitido (nenhum alvo)
 	assert_true(ok, "fireball em chão vazio deve pagar custo e emitir ability_used")
 	assert_signal_emitted(cm, "ability_used")
 	assert_signal_not_emitted(cm, "damage_applied")
 
+
 func test_fireball_area_acerta_vizinho() -> void:
 	var b := _make_board()
-	var atk := _make_unit("atk", 0, Vector2i(0,0))
-	var def := _make_unit("def", 1, Vector2i(2,2), 10)
+	var atk := _make_unit("atk", 0, Vector2i(0, 0))
+	var def := _make_unit("def", 1, Vector2i(2, 2), 10)
 	b.add_unit(atk)
 	b.add_unit(def)
 	var cm := CombatManager.new()
-	var resolver: CombatResolver = load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
+	var resolver: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/resolver_default.gd").new()
+	)
 	cm.setup(b, resolver)
 	add_child_autofree(cm)
-	var abil: AbilityResource = load("res://data/abilities/fireball.tres") as AbilityResource # 3x3, alc 5
+	var abil: AbilityResource = load("res://data/abilities/fireball.tres") as AbilityResource  # 3x3, alc 5
 	# mira em (1,1) vazio mas área pega (2,2)
 	var target: Vector2i = Vector2i(1, 1)
 	watch_signals(cm)
@@ -96,17 +106,18 @@ func test_fireball_area_acerta_vizinho() -> void:
 	assert_signal_emitted(cm, "damage_applied")
 	assert_eq(def.get_stat("hp"), 4, "fireball -6 em 10 => 4")
 
+
 func test_heal_cura_aliado() -> void:
 	var b := _make_board()
-	var healer := _make_unit("healer", 0, Vector2i(0,0))
+	var healer := _make_unit("healer", 0, Vector2i(0, 0))
 	healer.stats.set_stat("willpower", 5)
-	var ally := _make_unit("ally", 0, Vector2i(1,0), 5)
+	var ally := _make_unit("ally", 0, Vector2i(1, 0), 5)
 	b.add_unit(healer)
 	b.add_unit(ally)
 	var cm := CombatManager.new()
 	cm.setup(b)
 	add_child_autofree(cm)
-	var abil: AbilityResource = load("res://data/abilities/heal.tres") as AbilityResource # +5 hp, alc 3
+	var abil: AbilityResource = load("res://data/abilities/heal.tres") as AbilityResource  # +5 hp, alc 3
 	watch_signals(cm)
 	var ok: bool = cm.use_ability(healer, abil, ally.cell)
 	assert_true(ok)

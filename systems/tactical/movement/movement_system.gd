@@ -4,15 +4,21 @@ extends Node
 
 var board: TacticalBoard
 
+
 func setup(p_board: TacticalBoard) -> void:
 	board = p_board
 
+
 func get_reachable(unit: Unit) -> Array[Vector2i]:
 	var mov: int = unit.get_stat("movement")
-	return board.grid.get_reachable(unit.cell, mov, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == unit.cell)
+	return board.grid.get_reachable(
+		unit.cell, mov, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == unit.cell
+	)
+
 
 func can_move_to(unit: Unit, target: Vector2i) -> bool:
 	return get_reachable(unit).has(target)
+
 
 func move_unit(unit: Unit, target: Vector2i) -> bool:
 	if not can_move_to(unit, target):
@@ -31,22 +37,35 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 		unit.position = path_world[-1]
 		unit.moved.emit(target)
 		return true
-	const SEC_PER_CELL: float = 0.35 * 2.0 # dobro: 0.70 por célula
+	const SEC_PER_CELL: float = 0.35 * 2.0  # dobro: 0.70 por célula
 	var tw: Tween = unit.create_tween()
 	tw.set_parallel(false)
 	# 4-dir waypoints: slide sequencial por célula (não linha reta diagonal)
 	for i in range(1, path_world.size()):
 		var nxt: Vector3 = path_world[i]
-		tw.tween_property(unit, "position", nxt, SEC_PER_CELL).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(unit, "position", nxt, SEC_PER_CELL).set_trans(Tween.TRANS_SINE).set_ease(
+			Tween.EASE_IN_OUT
+		)
 	# bob y em paralelo (mesmo tween, overlay)
 	var y_tw: Tween = unit.create_tween()
 	y_tw.set_parallel(false)
 	for i in range(1, path_world.size()):
 		var nxt_y: float = path_world[i].y
-		y_tw.tween_property(unit, "position:y", nxt_y + 0.08, SEC_PER_CELL * 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		y_tw.tween_property(unit, "position:y", nxt_y, SEC_PER_CELL * 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		(
+			y_tw
+			. tween_property(unit, "position:y", nxt_y + 0.08, SEC_PER_CELL * 0.5)
+			. set_trans(Tween.TRANS_SINE)
+			. set_ease(Tween.EASE_IN_OUT)
+		)
+		(
+			y_tw
+			. tween_property(unit, "position:y", nxt_y, SEC_PER_CELL * 0.5)
+			. set_trans(Tween.TRANS_SINE)
+			. set_ease(Tween.EASE_IN_OUT)
+		)
 	tw.finished.connect(func() -> void: unit.moved.emit(target), CONNECT_ONE_SHOT)
 	return true
+
 
 func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	# A* simples Manhattan
@@ -58,7 +77,10 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 	var f_score: Dictionary = {from: _heuristic(from, to)}
 	var closed: Dictionary = {}
 	while not open.is_empty():
-		open.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return f_score.get(a, 9999) < f_score.get(b, 9999))
+		open.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool:
+				return f_score.get(a, 9999) < f_score.get(b, 9999)
+		)
 		var cur: Vector2i = open.pop_front()
 		if cur == to:
 			return _reconstruct(came_from, cur)
@@ -77,8 +99,10 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 					open.append(n)
 	return []
 
+
 func _heuristic(a: Vector2i, b: Vector2i) -> int:
 	return abs(a.x - b.x) + abs(a.y - b.y)
+
 
 func _reconstruct(came_from: Dictionary, cur: Vector2i) -> Array[Vector2i]:
 	var path: Array[Vector2i] = [cur]

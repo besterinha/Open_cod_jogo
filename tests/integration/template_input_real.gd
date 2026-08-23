@@ -27,5 +27,6 @@ extends GutTest
 #   assert_eq(board.get_unit_at(target), unit)
 #   assert_eq(turn.get_current_unit(), unit) # ou mudou
 
+
 func test_template_dummy_pass() -> void:
 	assert_true(true, "template existe para copiar")

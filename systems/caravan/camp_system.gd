@@ -7,11 +7,14 @@ var caravan: CaravanManager
 signal rested(day: int)
 signal camp_not_possible(reason: String)
 
+
 func setup(p_caravan: CaravanManager) -> void:
 	caravan = p_caravan
 
+
 func can_rest() -> bool:
 	return caravan != null and caravan.supplies > 0
+
 
 func rest(days: int = 1) -> bool:
 	if not can_rest():
@@ -26,6 +29,7 @@ func rest(days: int = 1) -> bool:
 		# cura heróis via EventBus (futuro: hero system escuta)
 		EventBus.morale_changed.emit(caravan.morale, caravan.get_morale_state())
 	return true
+
 
 func force_rest(days: int = 1) -> void:
 	# mesmo sem supplies, descansa (sem recuperar morale)

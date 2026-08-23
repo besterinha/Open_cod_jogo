@@ -2,6 +2,7 @@ extends GutTest
 # Input real: tap move não deve gerar VFX explosão — assert no CONSUMIDOR (Combat + Board)
 # Boundary: Input -> TacticalArena._handle_tap -> MovementSystem (consumidor) vs CombatManager (não deve)
 
+
 func test_tap_move_vazio_sem_vfx_no_consumidor() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
 	add_child_autofree(arena)
@@ -36,10 +37,13 @@ func test_tap_move_vazio_sem_vfx_no_consumidor() -> void:
 	await get_tree().process_frame
 	await get_tree().create_timer(0.1).timeout
 	# assert no CONSUMIDOR: Combat não deve ter emitido ability_used (explosão)
-	assert_signal_not_emitted(combat, "ability_used", "tap move não deve emitir VFX explosão no consumidor Combat")
+	assert_signal_not_emitted(
+		combat, "ability_used", "tap move não deve emitir VFX explosão no consumidor Combat"
+	)
 	assert_signal_not_emitted(combat, "damage_applied")
 	# consumidor Board deve ter movido
 	assert_eq(unit.cell, target, "board consumidor deve ter unit no destino após tap move")
+
 
 func test_tap_proprio_tile_sem_explosao() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
@@ -60,4 +64,6 @@ func test_tap_proprio_tile_sem_explosao() -> void:
 	watch_signals(combat)
 	arena.call("_handle_tap", screen_pos)
 	await get_tree().process_frame
-	assert_signal_not_emitted(combat, "ability_used", "tap próprio tile não deve explodir (consumidor Combat)")
+	assert_signal_not_emitted(
+		combat, "ability_used", "tap próprio tile não deve explodir (consumidor Combat)"
+	)

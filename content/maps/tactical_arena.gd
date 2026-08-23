@@ -23,6 +23,7 @@ var _long_press_index: int = -1
 var _long_press_pos: Vector2 = Vector2.ZERO
 var _long_press_handled: bool = false
 
+
 func _ready() -> void:
 	# StatsRegistry (se existir)
 	var reg: Node = get_node_or_null("/root/StatsRegistry")
@@ -86,11 +87,18 @@ func _ready() -> void:
 	turn_manager.battle_ended.connect(_on_battle_ended)
 	EventBus.turn_changed.connect(_on_turn_changed)
 
-	print("[TacticalArena] Motor genérico pronto. Grid %s, Units %d" % [board.grid_size, board.units.size()])
+	print(
+		(
+			"[TacticalArena] Motor genérico pronto. Grid %s, Units %d"
+			% [board.grid_size, board.units.size()]
+		)
+	)
 	turn_manager.start_battle()
+
 
 var _light_mat: StandardMaterial3D = null
 var _dark_mat: StandardMaterial3D = null
+
 
 func _ensure_tile_mats() -> void:
 	if _light_mat == null:
@@ -102,11 +110,14 @@ func _ensure_tile_mats() -> void:
 		_dark_mat.albedo_color = Color(0.86, 0.86, 0.86)
 		_dark_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 
+
 func _ensure_turn_arrow() -> void:
 	if _turn_arrow != null:
 		return
 	# tenta carregar placeholder .tscn se existir, senão cria Label3D 2D fallback
-	var arrow_scene: PackedScene = load("res://placeholders/tactical/arrow_indicator.tscn") as PackedScene
+	var arrow_scene: PackedScene = (
+		load("res://placeholders/tactical/arrow_indicator.tscn") as PackedScene
+	)
 	if arrow_scene != null:
 		_turn_arrow = arrow_scene.instantiate() as Node3D
 	else:
@@ -125,6 +136,7 @@ func _ensure_turn_arrow() -> void:
 	_turn_arrow.visible = false
 	add_child(_turn_arrow)
 
+
 func _update_turn_arrow(unit: Unit) -> void:
 	if _turn_arrow == null:
 		_ensure_turn_arrow()
@@ -141,8 +153,19 @@ func _update_turn_arrow(unit: Unit) -> void:
 		_arrow_tween.kill()
 	_arrow_tween = create_tween()
 	_arrow_tween.set_loops()
-	_arrow_tween.tween_property(_turn_arrow, "position:y", 1.9 + 0.15, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_arrow_tween.tween_property(_turn_arrow, "position:y", 1.9, 0.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	(
+		_arrow_tween
+		. tween_property(_turn_arrow, "position:y", 1.9 + 0.15, 0.6)
+		. set_trans(Tween.TRANS_SINE)
+		. set_ease(Tween.EASE_IN_OUT)
+	)
+	(
+		_arrow_tween
+		. tween_property(_turn_arrow, "position:y", 1.9, 0.6)
+		. set_trans(Tween.TRANS_SINE)
+		. set_ease(Tween.EASE_IN_OUT)
+	)
+
 
 func _spawn_tiles() -> void:
 	_ensure_tile_mats()
@@ -159,15 +182,19 @@ func _spawn_tiles() -> void:
 			mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
 			container.add_child(tile)
 
+
 func _spawn_units() -> void:
 	# Player units — pastel unshaded máxima visibilidade (Redmi)
 	for i in 2:
-		var u := _create_unit("Hero%d" % (i+1), 0, Vector2i(i, 0), Color(0.60, 0.85, 1.0))
+		var u := _create_unit("Hero%d" % (i + 1), 0, Vector2i(i, 0), Color(0.60, 0.85, 1.0))
 		board.add_unit(u)
 	# Enemy units
 	for i in 2:
-		var u := _create_unit("Enemy%d" % (i+1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1.0, 0.60, 0.60))
+		var u := _create_unit(
+			"Enemy%d" % (i + 1), 1, Vector2i(6 + i % 2, 6 + i / 2), Color(1.0, 0.60, 0.60)
+		)
 		board.add_unit(u)
+
 
 func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
 	var unit := Unit.new()
@@ -202,6 +229,7 @@ func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
 	unit.add_child(label)
 	return unit
 
+
 func _on_turn_started(unit: Unit) -> void:
 	selected_unit = unit
 	_update_turn_label(unit)
@@ -212,6 +240,7 @@ func _on_turn_started(unit: Unit) -> void:
 	if unit.team == 1:
 		await get_tree().create_timer(0.8).timeout
 		_play_ai(unit)
+
 
 func _play_ai(unit: Unit) -> void:
 	var ai := preload("res://systems/tactical/ai/aggressive_ai.gd").new()
@@ -230,14 +259,17 @@ func _play_ai(unit: Unit) -> void:
 	await get_tree().create_timer(0.5).timeout
 	turn_manager.end_turn()
 
+
 func _on_hud_ability_selected(abil: AbilityResource) -> void:
 	selected_ability = abil
 	print("[HUD] Habilidade selecionada touch: %s" % abil.nome)
 	if selected_unit:
 		_highlight_reachable(selected_unit)
 
+
 func _on_ability_used(user: Unit, abil: AbilityResource, cells: Array[Vector2i]) -> void:
 	_spawn_vfx(abil, cells)
+
 
 func _spawn_vfx(abil: AbilityResource, cells: Array[Vector2i]) -> void:
 	var scene: PackedScene = abil.vfx
@@ -265,12 +297,14 @@ func _spawn_vfx(abil: AbilityResource, cells: Array[Vector2i]) -> void:
 		tw.parallel().tween_property(v, "position:y", v.position.y + 0.5, 0.4)
 		tw.tween_callback(func() -> void: v.queue_free())
 
+
 func _on_damage_applied(target: Unit, effects: Array) -> void:
 	for eff in effects:
 		var sid: String = str(eff.get("stat_id", ""))
 		var delta: int = int(eff.get("delta", 0))
 		if sid == "hp":
 			_spawn_damage_number(target, delta)
+
 
 func _spawn_damage_number(unit: Unit, delta: int) -> void:
 	var lbl := Label3D.new()
@@ -286,8 +320,10 @@ func _spawn_damage_number(unit: Unit, delta: int) -> void:
 	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.8)
 	tw.tween_callback(func() -> void: lbl.queue_free())
 
+
 func _on_turn_changed(unit: Unit) -> void:
 	_update_turn_label(unit)
+
 
 func _update_turn_label(unit: Unit) -> void:
 	var label: Label = get_node_or_null("CanvasLayer/TurnLabel") as Label
@@ -297,6 +333,7 @@ func _update_turn_label(unit: Unit) -> void:
 		label.modulate = Color(0.2, 0.6, 1) if unit.team == 0 else Color(1, 0.4, 0.4)
 	# seta 2D voando indica vez — sem dim amarelo (puro)
 	_update_turn_arrow(unit)
+
 
 func _on_battle_ended(winner: int) -> void:
 	print("[Battle] Vitória do time %d!" % winner)
@@ -314,6 +351,7 @@ func _on_battle_ended(winner: int) -> void:
 		print("[Battle] Derrota — Game Over (volta para jornada para teste)")
 		get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
 
+
 func _clear_highlights() -> void:
 	for c in get_tree().get_nodes_in_group("highlight"):
 		c.queue_free()
@@ -321,6 +359,7 @@ func _clear_highlights() -> void:
 		c.queue_free()
 	for c in get_tree().get_nodes_in_group("highlight_outline"):
 		c.queue_free()
+
 
 func _highlight_reachable(unit: Unit) -> void:
 	# menos poluição: verde = movimento, azul = alcance da habilidade (só se selecionada, sem sobrepor verde)
@@ -344,10 +383,14 @@ func _highlight_reachable(unit: Unit) -> void:
 		$TacticalBoard.add_child(hl)
 	# alcance da habilidade selecionada em azul (menos poluído: só se selecionada)
 	if selected_ability:
-		var abil_reach: Array[Vector2i] = board.grid.get_reachable(unit.cell, selected_ability.alcance, func(c: Vector2i) -> bool: return board.grid.is_within_bounds(c))
+		var abil_reach: Array[Vector2i] = board.grid.get_reachable(
+			unit.cell,
+			selected_ability.alcance,
+			func(c: Vector2i) -> bool: return board.grid.is_within_bounds(c)
+		)
 		for cell in abil_reach:
 			if reachable.has(cell):
-				continue # já verde, não poluir
+				continue  # já verde, não poluir
 			var ol2 := MeshInstance3D.new()
 			ol2.mesh = _outline_box
 			ol2.material_override = _outline_mat
@@ -360,6 +403,7 @@ func _highlight_reachable(unit: Unit) -> void:
 			hl2.position = board.grid.cell_to_world(cell) + Vector3(0, 0.035, 0)
 			hl2.add_to_group("highlight_abil")
 			$TacticalBoard.add_child(hl2)
+
 
 func _handle_tap(pos: Vector2) -> void:
 	var unit: Unit = turn_manager.get_current_unit()
@@ -389,12 +433,22 @@ func _handle_tap(pos: Vector2) -> void:
 	if target_unit and target_unit.team != unit.team and selected_ability != null:
 		if combat.can_use_ability(unit, selected_ability, cell):
 			if combat.use_ability(unit, selected_ability, cell):
-				print("[Combat Touch] %s usou %s em %s" % [unit.display_name, selected_ability.nome, cell])
+				print(
+					(
+						"[Combat Touch] %s usou %s em %s"
+						% [unit.display_name, selected_ability.nome, cell]
+					)
+				)
 				turn_manager.end_turn()
 			else:
 				print("[Combat] Falha use_ability %s em %s" % [selected_ability.nome, cell])
 		else:
-			print("[Combat] Não pode usar %s em %s (alcance/custo %s)" % [selected_ability.nome, cell, selected_ability.custo])
+			print(
+				(
+					"[Combat] Não pode usar %s em %s (alcance/custo %s)"
+					% [selected_ability.nome, cell, selected_ability.custo]
+				)
+			)
 		return
 	# se tem unidade (aliada ou sem habilidade), não explode — ignora ataque
 	if target_unit:
@@ -407,6 +461,7 @@ func _handle_tap(pos: Vector2) -> void:
 			_highlight_reachable(unit)
 		else:
 			print("[Move] Não pode mover para %s" % cell)
+
 
 func _show_unit_info(pos: Vector2) -> void:
 	var cam: Camera3D = get_node_or_null("CameraRig/Camera3D") as Camera3D
@@ -423,7 +478,12 @@ func _show_unit_info(pos: Vector2) -> void:
 	var cell: Vector2i = board.grid.world_to_cell(hit)
 	var unit: Unit = board.get_unit_at(cell)
 	if unit:
-		print("[LongPress] %s | %s | HP:%d | Team %d" % [unit.display_name, unit.cell, unit.get_stat("hp"), unit.team])
+		print(
+			(
+				"[LongPress] %s | %s | HP:%d | Team %d"
+				% [unit.display_name, unit.cell, unit.get_stat("hp"), unit.team]
+			)
+		)
 		# feedback visual rápido (Label3D info)
 		var lbl := Label3D.new()
 		lbl.text = "%s\nHP:%d\n%s" % [unit.display_name, unit.get_stat("hp"), unit.cell]
@@ -437,6 +497,7 @@ func _show_unit_info(pos: Vector2) -> void:
 		tw.tween_callback(func() -> void: lbl.queue_free())
 	else:
 		print("[LongPress] vazio em %s" % cell)
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Pinch zoom — deixa CameraRig lidar, não marca drag
@@ -453,11 +514,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			# timer long-press 0.6s
 			var idx: int = event.index
 			var pos: Vector2 = event.position
-			get_tree().create_timer(0.6).timeout.connect(func() -> void:
-				if _long_press_index == idx and not _is_drag and not _long_press_handled:
-					if _touch_start.distance_to(pos) < 10.0:
-						_long_press_handled = true
-						_show_unit_info(pos)
+			get_tree().create_timer(0.6).timeout.connect(
+				func() -> void:
+					if _long_press_index == idx and not _is_drag and not _long_press_handled:
+						if _touch_start.distance_to(pos) < 10.0:
+							_long_press_handled = true
+							_show_unit_info(pos)
 			)
 		else:
 			if _long_press_index == event.index:
@@ -474,7 +536,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenDrag:
 		if _touch_start.distance_to(event.position) > 10.0:
 			_is_drag = true
-		return # deixa CameraRig lidar com pan
+		return  # deixa CameraRig lidar com pan
 	# Mouse para debug PC
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_handle_tap(event.position)

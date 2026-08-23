@@ -8,6 +8,7 @@ extends TurnManager
 var _order: Array[Unit] = []
 var _idx: int = 0
 
+
 func _next_turn() -> void:
 	if board == null:
 		return
@@ -27,8 +28,9 @@ func _next_turn() -> void:
 	turn_started.emit(_current_unit)
 	EventBus.turn_changed.emit(_current_unit)
 
+
 func _build_order() -> void:
 	_order = board.get_all_alive()
-	_order.sort_custom(func(a: Unit, b: Unit) -> bool:
-		return a.get_stat(init_stat_id) > b.get_stat(init_stat_id)
+	_order.sort_custom(
+		func(a: Unit, b: Unit) -> bool: return a.get_stat(init_stat_id) > b.get_stat(init_stat_id)
 	)

@@ -5,6 +5,7 @@ extends RefCounted
 
 const ALLOWED_AREAS: Array[String] = ["single", "3x3", "cross", "line"]
 
+
 static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Array[String]:
 	var errs: Array[String] = []
 	if res == null:
@@ -66,6 +67,7 @@ static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Arr
 				errs.append("logic_script sem activate")
 	return errs
 
+
 static func validate_event(res: Resource) -> Array[String]:
 	var errs: Array[String] = []
 	if res == null:
@@ -82,8 +84,10 @@ static func validate_event(res: Resource) -> Array[String]:
 		errs.append("evento sem escolhas")
 	return errs
 
+
 static func is_valid_ability(res: Resource, db: AttributeDatabase = null) -> bool:
 	return validate_ability(res, db).is_empty()
+
 
 static func is_valid_event(res: Resource) -> bool:
 	return validate_event(res).is_empty()

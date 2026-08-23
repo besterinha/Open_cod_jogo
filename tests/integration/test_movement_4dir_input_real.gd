@@ -2,6 +2,7 @@ extends GutTest
 # Input real 4-dir com assert no CONSUMIDOR downstream (board/turn), não só emissor
 # Boundary: movimento -> board.occupancy + turn (consumidores)
 
+
 func test_move_4dir_waypoints_com_input_real() -> void:
 	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
 	add_child_autofree(arena)
@@ -29,49 +30,63 @@ func test_move_4dir_waypoints_com_input_real() -> void:
 		target = start + Vector2i(1, 0)
 	if not board.is_walkable(target):
 		target = start
-	assert_true(movement.can_move_to(unit, target) or target == start, "target deve ser walkable para teste")
+	assert_true(
+		movement.can_move_to(unit, target) or target == start, "target deve ser walkable para teste"
+	)
 	if target == start:
-		return # sem movimento possível, teste passa
+		return  # sem movimento possível, teste passa
 	var before_pos: Vector3 = unit.position
 	watch_signals(unit)
 	watch_signals(board)
 	var path: Array[Vector2i] = movement.find_path(start, target)
 	assert_true(path.size() >= 2, "path deve ter waypoints (4-dir), não linha reta")
 	# diagonal (1,1) não deve estar em reachable range 1 (4-dir)
-	var reach1: Array[Vector2i] = board.grid.get_reachable(start, 1, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == start)
-	assert_false(reach1.has(start + Vector2i(1,1)), "diagonal não deve estar em reachable 4-dir")
+	var reach1: Array[Vector2i] = board.grid.get_reachable(
+		start, 1, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == start
+	)
+	assert_false(reach1.has(start + Vector2i(1, 1)), "diagonal não deve estar em reachable 4-dir")
 	# act: input real via movement (não unit.move_to direto)
 	var ok: bool = movement.move_unit(unit, target)
 	assert_true(ok, "move_unit deve aceitar")
 	# assert no CONSUMIDOR downstream imediato (board occupancy)
 	assert_eq(unit.cell, target, "emissor cell deve atualizar imediatamente para occupancy")
 	assert_eq(board.get_unit_at(target), unit, "board (consumidor) deve ver unit no destino")
-	assert_true(board.is_walkable(start) or board.get_unit_at(start) == null, "origem deve ficar livre (board consumidor)")
+	assert_true(
+		board.is_walkable(start) or board.get_unit_at(start) == null,
+		"origem deve ficar livre (board consumidor)"
+	)
 	# posição ainda não teleportou (tween 0.70 per-cell)
-	assert_true(unit.position.distance_to(before_pos) < 0.1, "posição não deve teleportar (tween downstream)")
+	assert_true(
+		unit.position.distance_to(before_pos) < 0.1,
+		"posição não deve teleportar (tween downstream)"
+	)
 	var wait: float = 0.70 * (path.size() - 1) + 0.3
 	await get_tree().create_timer(wait).timeout
 	var end_world: Vector3 = board.grid.cell_to_world(target)
-	assert_true(unit.position.distance_to(end_world) < 0.15, "após " + str(wait) + "s position deve estar no destino (consumidor) path " + str(path))
+	assert_true(
+		unit.position.distance_to(end_world) < 0.15,
+		"após " + str(wait) + "s position deve estar no destino (consumidor) path " + str(path)
+	)
+
 
 func test_move_4dir_nao_atravessa_parede() -> void:
 	var board := TacticalBoard.new()
-	board.grid = GridSystem.new(Vector2i(5,5), 1.0)
+	board.grid = GridSystem.new(Vector2i(5, 5), 1.0)
 	add_child_autofree(board)
 	var movement := MovementSystem.new()
 	movement.setup(board)
 	add_child_autofree(movement)
 	# bloqueia corredor: coloca unidade bloqueando (1,0)
 	var blocker := Unit.new()
-	blocker.cell = Vector2i(1,0)
+	blocker.cell = Vector2i(1, 0)
 	blocker.stats = UnitStats.new()
 	blocker.stats.values = {"hp": 10, "movement": 4}
 	board.add_unit(blocker)
 	var hero := Unit.new()
-	hero.cell = Vector2i(0,0)
+	hero.cell = Vector2i(0, 0)
 	hero.stats = UnitStats.new()
 	hero.stats.values = {"hp": 10, "movement": 4}
 	board.add_unit(hero)
-	var path: Array[Vector2i] = movement.find_path(Vector2i(0,0), Vector2i(2,0))
+	var path: Array[Vector2i] = movement.find_path(Vector2i(0, 0), Vector2i(2, 0))
 	# com (1,0) bloqueado, path deve contornar (não tamanho 3 direto)
 	assert_true(path.size() == 0 or path.size() > 3, "path deve contornar parede, não linha reta 3")

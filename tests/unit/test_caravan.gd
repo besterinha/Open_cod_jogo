@@ -1,6 +1,7 @@
 extends GutTest
 # Testa CaravanManager — garante que economia de supplies/morale não quebrou.
 
+
 func test_consume_day() -> void:
 	var c := CaravanManager.new()
 	add_child_autofree(c)
@@ -11,6 +12,7 @@ func test_consume_day() -> void:
 	assert_eq(c.morale, 40)
 	assert_eq(c.day, 2)
 
+
 func test_rest_day_recovers_morale() -> void:
 	var c := CaravanManager.new()
 	add_child_autofree(c)
@@ -20,6 +22,7 @@ func test_rest_day_recovers_morale() -> void:
 	assert_eq(c.morale, 50)
 	assert_eq(c.supplies, 9)
 
+
 func test_rest_without_supplies_no_morale() -> void:
 	var c := CaravanManager.new()
 	add_child_autofree(c)
@@ -27,6 +30,7 @@ func test_rest_without_supplies_no_morale() -> void:
 	c.morale = 40
 	c.rest_day()
 	assert_eq(c.morale, 40, "Sem supplies não recupera morale")
+
 
 func test_morale_state() -> void:
 	var c := CaravanManager.new()

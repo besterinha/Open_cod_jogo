@@ -15,12 +15,12 @@ jobs:
         run: |
           pip install gdtoolkit==4.5.0
           gdlint systems/ content/ tests/
-      - name: Gate 0 gdformat (AVISO ETAPA 1, não bloqueia)
+      - name: Gate 0 gdformat (BLOQUEANTE ETAPA 2)
         run: |
           pip install gdtoolkit==4.5.0
-          echo -e "\033[33m gdformat AVISO (ETAPA 1) — diff não bloqueia, ETAPA 2 bloqueará \033[0m"
-          gdformat --check systems/ content/ tests/ || echo -e "\033[33m AVISO: gdformat diff encontrado (não bloqueia ETAPA 1) \033[0m"
-          gdformat --diff systems/ content/ tests/ | head -n 50 || true
+          echo "Gate 0 gdformat BLOQUEANTE ETAPA 2 — alinhado Tab, base zerada"
+          gdformat --check systems/ content/ tests/
+          echo "gdformat BLOQUEANTE ok — zero diff"
       - name: Gate 0 check-only (BLOQUEANTE)
         run: godot --headless --check-only
       - name: Import project

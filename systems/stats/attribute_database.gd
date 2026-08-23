@@ -5,11 +5,13 @@ extends Resource
 
 @export var attributes: Array[AttributeDefinition] = []
 
+
 func get_ids() -> Array[String]:
 	var ids: Array[String] = []
 	for a in attributes:
 		ids.append(a.id)
 	return ids
+
 
 func get_def(id: String) -> AttributeDefinition:
 	for a in attributes:
@@ -17,14 +19,17 @@ func get_def(id: String) -> AttributeDefinition:
 			return a
 	return null
 
+
 func is_valid_id(id: String) -> bool:
 	return get_def(id) != null
+
 
 func clamp_value(id: String, v: int) -> int:
 	var d := get_def(id)
 	if d == null:
 		return v
 	return clamp(v, d.min_value, d.max_value)
+
 
 func validate() -> Array[String]:
 	var errs: Array[String] = []

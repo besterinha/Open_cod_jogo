@@ -4,7 +4,7 @@ extends Node3D
 # Sem hardcode hp/armor. Visual placeholder swapável.
 
 @export var unit_id: String = ""
-@export var team: int = 0 # 0 = player, 1 = enemy
+@export var team: int = 0  # 0 = player, 1 = enemy
 @export var cell: Vector2i = Vector2i.ZERO
 @export var stats: UnitStats
 @export var display_name: String = "Unit"
@@ -14,6 +14,7 @@ signal unit_defeated(unit: Unit)
 signal moved(to_cell: Vector2i)
 
 var _db: AttributeDatabase = null
+
 
 func _ready() -> void:
 	if stats == null:
@@ -33,8 +34,10 @@ func _ready() -> void:
 			stats.set_stat("movement", 4)
 	_update_visual()
 
+
 func get_stat(id: String) -> int:
 	return stats.get_stat(id) if stats else 0
+
 
 func set_stat(id: String, v: int) -> void:
 	if stats:
@@ -43,6 +46,7 @@ func set_stat(id: String, v: int) -> void:
 		if id == "hp" and v <= 0:
 			unit_defeated.emit(self)
 		_update_visual()
+
 
 func modify_stat(id: String, delta: int) -> int:
 	if stats == null:
@@ -54,11 +58,14 @@ func modify_stat(id: String, delta: int) -> int:
 	_update_visual()
 	return nxt
 
+
 func is_defeated() -> bool:
 	return get_stat("hp") <= 0
 
+
 func can_pay(cost: Dictionary) -> bool:
 	return stats.can_pay(cost) if stats else false
+
 
 func pay_cost(cost: Dictionary) -> bool:
 	if stats == null:
@@ -69,10 +76,12 @@ func pay_cost(cost: Dictionary) -> bool:
 			stats_changed.emit(str(sid), stats.get_stat(str(sid)))
 	return ok
 
+
 func move_to(new_cell: Vector2i, grid: GridSystem) -> void:
 	cell = new_cell
 	position = grid.cell_to_world(cell)
 	moved.emit(cell)
+
 
 func _update_visual() -> void:
 	# atualiza Label3D se existir (Unit/Label é irmão de Visual, não Visual/Label)

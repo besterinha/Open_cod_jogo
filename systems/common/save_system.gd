@@ -12,11 +12,14 @@ var _data: Dictionary = {
 	"pop": {"clansmen": 100, "fighters": 30, "varl": 10, "heroes": []},
 }
 
+
 func get_data() -> Dictionary:
 	return _data.duplicate(true)
 
+
 func set_data(d: Dictionary) -> void:
 	_data = d.duplicate(true)
+
 
 func save() -> bool:
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -25,6 +28,7 @@ func save() -> bool:
 		return false
 	f.store_string(JSON.stringify(_data, "\t"))
 	return true
+
 
 func load_save() -> bool:
 	if not FileAccess.file_exists(SAVE_PATH):

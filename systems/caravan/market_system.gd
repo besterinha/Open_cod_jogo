@@ -12,17 +12,22 @@ var caravan: CaravanManager
 signal exchanged(renown_spent: int, supplies_gained: int, new_rate: int)
 signal exchange_failed(reason: String)
 
+
 func setup(p_caravan: CaravanManager) -> void:
 	caravan = p_caravan
+
 
 func set_rate(rate: int) -> void:
 	current_rate = clamp(rate, min_rate, max_rate)
 
+
 func randomize_rate() -> void:
 	current_rate = randi_range(min_rate, max_rate)
 
+
 func can_buy_supplies(renown_cost: int = 1) -> bool:
 	return caravan != null and caravan.renown >= renown_cost
+
 
 func buy_supplies(renown_cost: int = 1) -> bool:
 	if not can_buy_supplies(renown_cost):
@@ -36,10 +41,12 @@ func buy_supplies(renown_cost: int = 1) -> bool:
 	exchanged.emit(renown_cost, supplies_gained, current_rate)
 	return true
 
+
 func buy_supplies_amount(supplies_wanted: int) -> bool:
 	# calcula renown necessário (arredonda pra cima)
 	var cost: int = int(ceil(float(supplies_wanted) / current_rate))
 	return buy_supplies(cost)
+
 
 func get_preview(supplies_wanted: int) -> Dictionary:
 	return {

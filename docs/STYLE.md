@@ -95,8 +95,9 @@ Ordem: `class_name` → `extends` → `## docstring` → `signal` → `enum` →
 ## 8. Validação Automática
 
 *   **Editor:** Godot formata com `Tab` automaticamente.
-*   **Local:** `godot --headless --check-only` + `DataValidator` + `gut --headless -gexit`
-*   **CI:** `barichello/godot-ci:4.7.2` falha se `style != ok` (futuro `gdformat --check` quando disponível para 4.7)
+*   **Local:** `gdlint` (BLOQUEANTE) + `gdformat --check` (BLOQUEANTE ETAPA 2, `gdformatrc` `line_length 100, Tab`) + `godot --headless --check-only` + `DataValidator` + `gut --headless -gexit`
+*   **CI:** `barichello/godot-ci:4.7.2` `Gate 0 gdlint + gdformat + check-only` falha se `style != ok`
+*   **Gate 0 ETAPA 2:** `gdformat` alinhado `Tab` (`gdformatrc`), base zerada `61 files left unchanged`, promovido `AVISO → BLOQUEANTE` `pre-commit` e `ci.yml`
 
 ## 9. Para IA — Prompt Padrão
 

@@ -5,6 +5,7 @@ extends RefCounted
 # Justificativa A3: TDD promete este arquivo para IA não tocar em systems/; bootstrap criou data/*.tres direto,
 # mas IA precisa do conversor. Stub mantém arquitetura (content -> systems) e fecha A3 sem criar código morto.
 
+
 static func json_to_ability(json: Dictionary, db: AttributeDatabase = null) -> AbilityResource:
 	if db == null:
 		db = load("res://data/stats/attributes.tres") as AttributeDatabase
@@ -32,6 +33,7 @@ static func json_to_ability(json: Dictionary, db: AttributeDatabase = null) -> A
 		a.logic_script = load(logic_path) as GDScript
 	# valida antes de retornar; quem chama deve checar DataValidator
 	return a
+
 
 static func validate_and_convert(json: Dictionary, db: AttributeDatabase = null) -> Dictionary:
 	# retorna {ability: AbilityResource, errors: Array[String]}

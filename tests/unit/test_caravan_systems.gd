@@ -1,6 +1,7 @@
 extends GutTest
 # Testa Motor Caravana Fase 1: Travel, Camp, Market, Event — genérico, validável.
 
+
 func test_travel_one_day_consumes() -> void:
 	var c := CaravanManager.new()
 	c.supplies = 10
@@ -12,6 +13,7 @@ func test_travel_one_day_consumes() -> void:
 	t.travel_one_day()
 	assert_eq(c.supplies, 9)
 	assert_eq(c.day, 2)
+
 
 func test_camp_rest_recovers_morale() -> void:
 	var c := CaravanManager.new()
@@ -25,6 +27,7 @@ func test_camp_rest_recovers_morale() -> void:
 	assert_eq(c.morale, 50)
 	assert_eq(c.supplies, 9)
 
+
 func test_camp_no_supplies_fails() -> void:
 	var c := CaravanManager.new()
 	c.supplies = 0
@@ -34,6 +37,7 @@ func test_camp_no_supplies_fails() -> void:
 	add_child_autofree(c)
 	assert_false(camp.can_rest())
 	assert_false(camp.rest(1))
+
 
 func test_market_buy_supplies() -> void:
 	var c := CaravanManager.new()
@@ -48,6 +52,7 @@ func test_market_buy_supplies() -> void:
 	assert_eq(c.supplies, 5)
 	assert_eq(c.renown, 4)
 
+
 func test_market_insufficient_renown_fails() -> void:
 	var c := CaravanManager.new()
 	c.renown = 0
@@ -56,6 +61,7 @@ func test_market_insufficient_renown_fails() -> void:
 	add_child_autofree(m)
 	add_child_autofree(c)
 	assert_false(m.buy_supplies(1))
+
 
 func test_event_roll_and_apply() -> void:
 	var c := CaravanManager.new()

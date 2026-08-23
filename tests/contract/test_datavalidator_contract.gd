@@ -1,6 +1,7 @@
 extends GutTest
 # Contract: DataValidator bloqueia conteúdo IA inválido antes de GUT
 
+
 func test_all_abilities_in_data_pass_contract() -> void:
 	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
 	assert_not_null(db)
@@ -21,6 +22,7 @@ func test_all_abilities_in_data_pass_contract() -> void:
 		file = dir.get_next()
 	assert_true(count >= 3, "deve ter pelo menos 3 abilities")
 
+
 func test_rejects_vfx_inexistente() -> void:
 	var a := AbilityResource.new()
 	a.id = "bad_vfx"
@@ -30,7 +32,10 @@ func test_rejects_vfx_inexistente() -> void:
 	# como não dá para criar PackedScene fake facilmente, testamos efeitos vazio que agora é rejeitado
 	a.efeitos = []
 	var errs: Array[String] = DataValidator.validate_ability(a)
-	assert_true(errs.any(func(e: String) -> bool: return "efeitos" in e), "efeitos vazio deve ser rejeitado")
+	assert_true(
+		errs.any(func(e: String) -> bool: return "efeitos" in e), "efeitos vazio deve ser rejeitado"
+	)
+
 
 func test_rejects_id_duplicado_via_database() -> void:
 	# AttributeDatabase já valida ids duplicados, testamos via ability id duplicado na pasta (manual)
@@ -40,6 +45,7 @@ func test_rejects_id_duplicado_via_database() -> void:
 		assert_false(ids.has(attr.id), "id duplicado em attributes: %s" % attr.id)
 		ids[attr.id] = true
 
+
 func test_rejects_unknown_stat_id() -> void:
 	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
 	var a := AbilityResource.new()
@@ -48,7 +54,11 @@ func test_rejects_unknown_stat_id() -> void:
 	a.custo = {"unknown_stat": 1}
 	a.efeitos = [{"stat_id": "hp", "delta": -5}]
 	var errs: Array[String] = DataValidator.validate_ability(a, db)
-	assert_true(errs.any(func(e: String) -> bool: return "unknown" in e or "desconhecido" in e), "Deveria rejeitar stat desconhecido")
+	assert_true(
+		errs.any(func(e: String) -> bool: return "unknown" in e or "desconhecido" in e),
+		"Deveria rejeitar stat desconhecido"
+	)
+
 
 func test_rejects_area_outside_whitelist() -> void:
 	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
@@ -60,6 +70,7 @@ func test_rejects_area_outside_whitelist() -> void:
 	var errs: Array[String] = DataValidator.validate_ability(a, db)
 	assert_true(errs.any(func(e: String) -> bool: return "area" in e))
 
+
 func test_rejects_alcance_over_10() -> void:
 	var a := AbilityResource.new()
 	a.id = "far"
@@ -68,6 +79,7 @@ func test_rejects_alcance_over_10() -> void:
 	a.efeitos = [{"stat_id": "hp", "delta": -5}]
 	var errs: Array[String] = DataValidator.validate_ability(a)
 	assert_true(errs.any(func(e: String) -> bool: return "alcance" in e))
+
 
 func test_rejects_efeito_sem_stat_id() -> void:
 	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
@@ -78,11 +90,13 @@ func test_rejects_efeito_sem_stat_id() -> void:
 	var errs: Array[String] = DataValidator.validate_ability(a, db)
 	assert_true(errs.any(func(e: String) -> bool: return "stat_id" in e))
 
+
 func test_event_contract_weight_and_escolhas() -> void:
 	var ev: Resource = load("res://data/events/supply_raid.tres")
 	assert_not_null(ev)
 	var errs: Array[String] = DataValidator.validate_event(ev)
 	assert_eq(errs.size(), 0, "supply_raid inválido: %s" % ", ".join(errs))
+
 
 func test_all_events_in_data_pass_contract() -> void:
 	var dir := DirAccess.open("res://data/events")
