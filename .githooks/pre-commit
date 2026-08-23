@@ -2,9 +2,10 @@
 # Porta fechada no fluxo local — recusa commit se testes não passarem (rápido, <15s)
 set -e
 echo "pre-commit: style + file-coverage + contract+unit (rápido)"
-# style Tab (instant)
-if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>&1 | head -n 5; then
+# style Tab (instant) — bloqueia se encontrar 4 espaços após tab
+if grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | grep -q .; then
   echo "pre-commit: indent com espaços, use Tab"
+  grep -rn "^\t*    " --include="*.gd" systems/ ui/ content/ 2>/dev/null | head -n 5
   exit 1
 fi
 # file-coverage (instant)
