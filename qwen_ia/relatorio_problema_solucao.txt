@@ -1,0 +1,62 @@
+RELATORIO — PROBLEMA ATUAL DE IMPLEMENTACAO E VALIDACAO + SOLUCAO
+Projeto: Open_cod_jogo — TRPG Tatico 2.5D + Caravana | Godot 4.7.2 | 23/08/2026
+Autor: Muse Spark (OpenCode) — para qwen_ia
+
+======================================================================
+PARTE 1 — PROBLEMA: POR QUE NAO ESTAVA CONSEGUINDO FAZER APLICACOES DA MANEIRA CORRETA E VALIDAR
+======================================================================
+
+1. SINTOMA VISIVEL (o que voce testou no APK)
+- Grid escuro + highlight escuro dificil de ver (cores 0.30 vs 0.25 sobre fundo #282828, sem emissao)
+- Camera arrasto na diagonal (X/Y -> X/Z 1:1 sem base isometrica 45°) e pinch zoom sem funcionar no celular (MagnifyGesture nunca chega)
+- Turno sem identificacao (TurnLabel ficava "Turno: -", _on_turn_changed = pass)
+- Attack mostrava 0 (strike.tres custo {} -> HUD 0) e magias com VFX sem dano (VFX incondicional, dano condicional por board.get_unit_at == null ou alcance Manhattan vs BFS azul)
+
+2. CAUSA RAIZ — NAO EH FALTA DE CODIGO, EH PROCESSO
+- Regra tardia + nao seguida: ate 22/08 22:18 docs/TDD.md#8 era unit+smoke só. So em fd4e7fd criei piramide 70/25/5 (contract+integration+e2e) e em 7377f5f explicitei em AGENTS.md. Antes disso caravana/tatico/HUD/MVE foram feitos sem unit+integration obrigatorio.
+- Workflow code-first -> retrofit reativo: feat/fix -> push main -> gut headless verde (37 testes isolados) -> considerado Done -> horas depois retrofit teste para fechar buraco (ex: 05a1f2a camera pan 0.015 sem teste, 0d1f299 retrofit 8h depois). O correto seria teste falhando primeiro (TDD).
+- Validacao so headless, nunca device: AGENTS.md "Validar antes de commit: --import + gut" so roda no Codespace/barichello/godot-ci Linux. Nenhum Definition of Done exigia instalar debug.apk em 720p/2K + tap/pinch/long-press. Pinch headless injeta MagnifyGesture direto (rig._unhandled_input) e passa, mas no Android precisa project.godot enable_pan_and_scale_gestures=true + fallback manual distance(touch0,touch1) — nunca testado.
+- CI verde com 0 testes para codigo novo: .gutconfig.json tinha dirs ["unit","smoke"] só; CI grep gyms/ mas nao file->test mapping. Criar systems/new_feature.gd com 0 testes mantinha gut 37/37 verde. Contract listava ["strike","heal","fireball"] fixo, nao DirAccess glob, entao meteor.tres com banana passava. Style com grep warning nao bloqueava.
+
+Resultado: Done = gut headless verde (qualquer teste) != Done = feature tem unit (isolado RefCounted) + integration (completo HUD+Combat+Board com watch_signals + await process_frame) + contract + device validado. Por isso APK 29M passava no CI e falhava no seu celular, e eu ficava reativo (APK -> voce reporta -> fix especifico).
+
+======================================================================
+PARTE 2 — SOLUCAO ENCONTRADA E JA APLICADA (sem travar design, so processo)
+======================================================================
+
+PRINCIPIO: Nao eh falta de regra, eh falta de enforcement. Regras ja existiam, eram corretas mas incompletas e tardias. Travei enforcement, nao so texto.
+
+A) PIRAMIDE TRAVADA (docs/TDD.md#8 + .gutconfig.json + AGENTS.md)
+- docs/TDD.md#8 reescrito Pirâmide 70/25/5: 70% unit (lógica pura RefCounted), 25% integration (2-3 systems juntos), 5% contract+smoke+e2e
+- .gutconfig.json dirs: ["unit","contract","integration","smoke","regression","e2e"] (antes ["unit","smoke"])
+- AGENTS.md:33 + 56 explicito: "Validar antes de commit: --import + --check-only + DataValidator + gut (CI falha se style/test != ok)" + "Toda nova feature: unit (isolado new() sem cena) + integration (completo HUD+Combat+Board com watch_signals e await process_frame) — CI bloqueia contract/unit/integration/smoke se falhar. Nunca só isolado." (fonte para IA via opencode.json instructions)
+
+B) GATES QUE BLOQUEIAM PR (7 gates, .github/workflows/ci.yml)
+1. Import + Compile: godot --import + --check-only + .editorconfig Tab/LF
+2. Contract (<1min): tests/contract/* — DataValidator rejeita stat_id desconhecido, alcance>10, area fora whitelist, vfx inexistente, ids duplicados, AttributeDatabase, SaveCompat v0.1.sav
+3. Unit (<5min): tests/unit/* — resolver, stats, floodfill, can_pay isolado
+4. Integration (PR <15min): tests/integration/* — HUD+Combat+Board, Input+Combat via ScreenTouch simulado, Caravana->Tático via EventBus com watch_signals (pega VFX sem dano e HUD 0 vs custo 3)
+5. Smoke+E2E (<10min): tests/smoke/* com await process_frame + tiles 8x8 + highlight; tests/e2e/* vertical slice 10 dias jornada + 2v2 + 3 habilidades + Save
+6. Regression: cada bug vira tests/regression/test_regression_bug_<id>.gd permanente
+7. CI bloqueia gyms -> !gyms e agora file-coverage
+
+C) FECHA BRECHAS CRITICAS (commit 7bb6e4a)
+- ci/check-file-coverage.sh: se systems/*.gd mudou e nenhum tests/*.gd mudou -> ::error MISSING TEST (fecha CI verde com 0 testes)
+- Contrato glob: tests/contract/test_datavalidator_contract varre DirAccess.get_files("res://data/abilities") (antes lista fixa 3), DataValidator exaustivo: efeitos vazio, delta missing, vfx path, logic_script can_activate
+- Style bloqueante: grep Tab indent com exit 1 (antes warning)
+- godot-validation-flow run (broken deps, bad UID) + modular deps systems->content bypass (res://content/ em systems) + export sem gyms + branch protection documentada
+
+D) REGRA TDD DE VERDADE (nao so doc)
+- Processo: escrever teste de integracao falhando primeiro (ex: fireball 3x3 em chao vazio deve acertar vizinho) -> implementar sistemas/data/ -> gut verde -> commit. Antes era code first -> retrofit. Agora Done = teste falhando -> implementacao -> teste verde + APK touch validado.
+
+VALIDACAO QUE PROVA QUE FUNCIONA (23/08 01:08, HEAD 76 testes)
+- Antes: 37 isolados, VFX sem dano passava
+- Depois: 76 funcs (41 unit +14 contract +14 integration +4 smoke +3 e2e) 213 asserts, import DONE, contract 12, unit 41, integration 14, smoke+e2e 7
+- Quando reintroduzo 1 linha errada (ex: voltar Array[Dictionary] cast) integration volta a 5 falhando com "Trying to assign Array" — gate pegaria antes do APK
+- Ultimo APK 01:08 com grid Opcao C (0.58/0.44 + emissao 1.5 + outline 1.0) + camera 0.015 + MVE hp_only ja passou pelos 7 gates
+
+TRADEOFF HONESTO: integration em todo PR deixa CI ~15min (vs 5min so unit), mais seguro mas mais lento. Deixei integration só em PR (recomendado) e unit+contract em todo push.
+
+Arquivos chave: AGENTS.md:33,56 docs/STYLE.md docs/TDD.md#8 .gutconfig.json .github/workflows/ci.yml ci/check-file-coverage.sh systems/common/data_validator.gd
+
+Estado: sem skills por enquanto (desnecessario para MVP), opcao C visibilidade e camera ja no APK, proximo APK ja com 76 testes verdes antes de exportar.

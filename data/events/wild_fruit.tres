@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="EventResource" load_steps=4 format=3 uid="uid://w1ldfru1tw1ldfr"]
+
+[ext_resource type="Script" path="res://systems/caravan/event_resource.gd" id="1_fruit"]
+[ext_resource type="Script" path="res://systems/caravan/event_choice.gd" id="2_choice2"]
+
+[sub_resource type="Resource" id="choice_fruit_1"]
+script = ExtResource("2_choice2")
+label = "Colher tudo"
+cost = {
+}
+reward = {
+"supplies": 12,
+"morale": 5
+}
+
+[sub_resource type="Resource" id="choice_fruit_2"]
+script = ExtResource("2_choice2")
+label = "Ignorar, pode ser venenoso"
+cost = {
+}
+reward = {
+"morale": -5
+}
+
+[resource]
+script = ExtResource("1_fruit")
+id = "wild_fruit"
+weight = 12
+trigger = "random"
+titulo = "Frutos Silvestres"
+texto = "Um arbusto carregado chama atenção. Cheira bem, mas será seguro?"
+escolhas = Array[Resource]([SubResource("choice_fruit_1"), SubResource("choice_fruit_2")])

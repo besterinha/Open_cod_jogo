@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="EventResource" load_steps=4 format=3 uid="uid://bl1zz4rdbl1zz4r"]
+
+[ext_resource type="Script" path="res://systems/caravan/event_resource.gd" id="1_blizz"]
+[ext_resource type="Script" path="res://systems/caravan/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="choice_blizz_1"]
+script = ExtResource("2_choice")
+label = "Acampar e esperar"
+cost = {
+"supplies": 5
+}
+reward = {
+"morale": 5
+}
+
+[sub_resource type="Resource" id="choice_blizz_2"]
+script = ExtResource("2_choice")
+label = "Forçar marcha"
+cost = {
+"morale": 10
+}
+reward = {
+"renown": 2
+}
+
+[resource]
+script = ExtResource("1_blizz")
+id = "blizzard"
+weight = 8
+trigger = "random"
+titulo = "Nevasca Repentina"
+texto = "Ventos cortantes encobrem a trilha. A caravana hesita."
+escolhas = Array[Resource]([SubResource("choice_blizz_1"), SubResource("choice_blizz_2")])

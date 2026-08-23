@@ -83,3 +83,20 @@ func test_event_contract_weight_and_escolhas() -> void:
 	assert_not_null(ev)
 	var errs: Array[String] = DataValidator.validate_event(ev)
 	assert_eq(errs.size(), 0, "supply_raid inválido: %s" % ", ".join(errs))
+
+func test_all_events_in_data_pass_contract() -> void:
+	var dir := DirAccess.open("res://data/events")
+	assert_not_null(dir, "data/events deve existir")
+	dir.list_dir_begin()
+	var file: String = dir.get_next()
+	var count: int = 0
+	while file != "":
+		if file.ends_with(".tres") and not dir.current_is_dir():
+			var p: String = "res://data/events/" + file
+			var ev: Resource = load(p)
+			assert_not_null(ev, "Event faltando: %s" % p)
+			var errs: Array[String] = DataValidator.validate_event(ev)
+			assert_eq(errs.size(), 0, "%s inválido: %s" % [p, ", ".join(errs)])
+			count += 1
+		file = dir.get_next()
+	assert_true(count >= 3, "deve ter pelo menos 3 eventos (GDD 3/3)")
