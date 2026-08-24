@@ -186,8 +186,37 @@ Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, 
 
 Conversor: `systems/common/json_to_resource.gd` (JSON -> Resource). IA nunca edita `systems/`, só `data/`.
 
+### Mapa/Terreno JSON -> BoardLayoutResource (T1)
+```json
+{
+  "size": [8, 8],
+  "damage_delta": -2,
+  "rows": [
+    "........",
+    "..##....",
+    "..##..3.",
+    "........",
+    "....^...",
+    "...44...",
+    "........",
+    "........"
+  ]
+}
+```
+Tokens: `.` livre · `#` muro (movimento+visão) · `2`-`9` custo · `^` piso de dano. Validator: tokens na whitelist, linhas==size.y, colunas==size.x, custo>=1.
+
 ## 7b. Regra Input Real — Boundary Downstream (2026-08-23)
 Input → handler → estado seleção → sistema turno lido. Teste que `assert` só no emissor é `unidade isolada`; `integração input real` deve `assert` no **consumidor downstream** que lê o efeito (Board, Combat, Turn, HUD, EventBus). Critério: se componente tem consumidores conhecidos, `watch_signals(consumidor)` não `emissor`. Ver `tests/integration/template_input_real.gd` + `tests/integration/test_movement_4dir_input_real.gd`.
+
+## 4c. Terreno & LOS — camada plugável por dados (T1)
+`BoardLayoutResource` (`data/maps/*.tres`): mapa por **tokens** (`.` livre · `#` muro bloqueia movimento+visão · `2`-`9` custo de movimento · `^` piso de dano com `damage_delta`). `TerrainLayer` opcional no board — sem layout, grid todo-livre (compat total).
+- **Walkable:** `TacticalBoard.is_walkable` respeita `blocked` (consumidor TerrainLayer)
+- **Movimento ponderado:** `MovementSystem.get_reachable` = Dijkstra-lite por ORÇAMENTO DE CUSTO (stat movement); `find_path` = A* ponderado pelo custo da célula; IA contorna automaticamente
+- **Alcance de habilidade** continua floodfill uniforme (distância pura, não terreno)
+- **Piso de dano:** aplicado uma vez ao entrar (`on_unit_entered` → `modify_stat`, sinal `damage_floor_triggered`)
+- **LOS:** `GridSystem.has_line_of_sight(from, to, opaque)` Bresenham supercover; endpoints ignorados; pronta para `requires_los` no T4
+- Visual placeholder: muro escuro, dano laranja (unshaded)
+Schema IA em `#schema-ia`. Próximas fases: T2 áreas Strategy, T3 status effects, T4 classes/targeting, T5 movimento especial.
 
 ## 4b. Movimento Tático — 4-dir + 0.70s per-cell
 `MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` via `Tween` `SINE`, não linha reta. **Occupancy é imediata** ao iniciar o movimento (`update_occupancy` antes do tween) — previne 2 unidades na mesma célula durante a animação; posição visual chega depois (decisão ADR-007b). Bob do eixo y roda no mesmo tween via `tween_method`. **Lock anti-stack**: `is_moving(unit)` + `move_unit` rejeita enquanto anima (`_active: unit_id -> Tween`) — multi-tap não acelera nem corta caminho (regression move_stack). **1 movimento por turno** (GDD "Mover + Ação"): arena `moves_left=1` resetado em `_on_turn_started`; zerado limpa highlights verdes, mantém azul da habilidade. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info. Vitória: `TeamRoundRobin._next_turn` chama `check_victory`; arena também conecta `unit_defeated -> check_victory` (guarda `_battle_over` anti-dupla emissão). Fundo branco: `default_env.tres background_mode=1 (BG_COLOR)` + `default_clear_color branco` (mode 0 ignora background_color — regression bg_white).

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://t4ct1c4l4r3n4"]
+[gd_scene load_steps=10 format=3 uid="uid://t4ct1c4l4r3n4"]
 
 [ext_resource type="Script" path="res://content/maps/tactical_arena.gd" id="1_script"]
 [ext_resource type="Script" path="res://systems/tactical/tactical_board.gd" id="2_board"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://systems/tactical/camera_rig.gd" id="6_rig"]
 [ext_resource type="PackedScene" uid="uid://t4ct1c4lhudt4ct1c" path="res://ui/tactical_hud.tscn" id="7_hud"]
 [ext_resource type="Environment" path="res://default_env.tres" id="8_env"]
+[ext_resource type="Script" path="res://systems/tactical/terrain/terrain_layer.gd" id="9_terrain"]
+[ext_resource type="Resource" path="res://data/maps/tactical_arena.tres" id="10_layout"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_grid"]
 size = Vector3(0.9, 0.05, 0.9)
@@ -27,6 +29,10 @@ script = ExtResource("3_turn")
 
 [node name="MovementSystem" type="Node" parent="."]
 script = ExtResource("4_move")
+
+[node name="TerrainLayer" type="Node3D" parent="."]
+script = ExtResource("9_terrain")
+layout = ExtResource("10_layout")
 
 [node name="CombatManager" type="Node" parent="."]
 script = ExtResource("5_combat")

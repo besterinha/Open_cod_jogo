@@ -27,21 +27,20 @@ func test_move_4dir_waypoints_com_input_real() -> void:
 	var unit: Unit = _pegar_hero(board, turn)
 	assert_not_null(unit)
 	var start: Vector2i = unit.cell
-	# destino walkable 1-2 células à direita
-	var target: Vector2i = start + Vector2i(2, 0)
-	if not board.grid.is_within_bounds(target) or not board.is_walkable(target):
-		target = start + Vector2i(1, 0)
-	if not board.is_walkable(target):
-		target = start
-	if target == start:
-		return  # sem movimento possível neste layout
 	# diagonal (1,1) não deve estar em reachable range 1 (4-dir)
 	var reach1: Array[Vector2i] = board.grid.get_reachable(
 		start, 1, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == start
 	)
 	assert_false(reach1.has(start + Vector2i(1, 1)), "diagonal não deve estar em reachable 4-dir")
-	var path: Array[Vector2i] = movement.find_path(start, target)
-	assert_true(path.size() >= 2, "path deve ter waypoints (4-dir), não linha reta")
+	# destino = célula mais distante do alcance real (custo-aware, terreno-respeitante)
+	var reach: Array[Vector2i] = movement.get_reachable(unit)
+	reach.erase(start)
+	if reach.is_empty():
+		return  # sem movimento possível neste layout
+	var target: Vector2i = start
+	for c in reach:
+		if (c - start).length_squared() > (target - start).length_squared():
+			target = c
 	watch_signals(board)
 	var before_pos: Vector3 = unit.position
 	# ACT input real: unproject do destino + handler real (não move_unit direto)
@@ -64,6 +63,8 @@ func test_move_4dir_waypoints_com_input_real() -> void:
 		unit.position.distance_to(before_pos) < 0.1,
 		"posição não deve teleportar (tween downstream)"
 	)
+	var path: Array[Vector2i] = movement.find_path(start, target)
+	assert_true(path.size() >= 2, "path deve ter waypoints (4-dir), não linha reta")
 	var wait: float = 0.70 * float(path.size() - 1) + 0.3
 	await get_tree().create_timer(wait).timeout
 	var end_world: Vector3 = board.grid.cell_to_world(target)

@@ -7,6 +7,7 @@ extends Node3D
 
 var grid: GridSystem
 var units: Array[Unit] = []
+var terrain: TerrainLayer = null  # opcional — null = grid todo livre (compat)
 var _occupancy: Dictionary = {}  # Vector2i -> Unit
 
 signal unit_added(unit: Unit)
@@ -47,6 +48,8 @@ func get_unit_at(cell: Vector2i) -> Unit:
 
 func is_walkable(cell: Vector2i) -> bool:
 	if not grid.is_within_bounds(cell):
+		return false
+	if terrain != null and terrain.is_blocked(cell):
 		return false
 	if _occupancy.has(cell):
 		var occ: Unit = _occupancy[cell] as Unit

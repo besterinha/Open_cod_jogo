@@ -56,3 +56,28 @@ func get_reachable(origin: Vector2i, range_steps: int, walkable: Callable) -> Ar
 			dist[n] = d + 1
 			frontier.append(n)
 	return result
+
+
+func has_line_of_sight(from: Vector2i, to: Vector2i, opaque: Callable) -> bool:
+	# Bresenham supercover célula-a-célula; extremidades nunca bloqueiam (alvo visível).
+	if from == to:
+		return true
+	var dx: int = abs(to.x - from.x)
+	var dy: int = abs(to.y - from.y)
+	var sx: int = 1 if to.x > from.x else -1
+	var sy: int = 1 if to.y > from.y else -1
+	var err: int = dx - dy
+	var cur := Vector2i(from)
+	while cur != to:
+		var e2: int = err * 2
+		if e2 > -dy:
+			err -= dy
+			cur.x += sx
+		if e2 < dx:
+			err += dx
+			cur.y += sy
+		if cur == to:
+			break
+		if opaque.is_valid() and opaque.call(cur):
+			return false
+	return true

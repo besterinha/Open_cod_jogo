@@ -23,10 +23,36 @@ func is_moving(unit: Unit) -> bool:
 
 
 func get_reachable(unit: Unit) -> Array[Vector2i]:
-	var mov: int = unit.get_stat("movement")
-	return board.grid.get_reachable(
-		unit.cell, mov, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == unit.cell
-	)
+	# Alcance de movimento por ORÇAMENTO DE CUSTO (terreno custoso), não por passos.
+	var budget: int = unit.get_stat("movement")
+	return _reachable_with_cost(unit.cell, budget)
+
+
+func _reachable_with_cost(origin: Vector2i, budget: int) -> Array[Vector2i]:
+	# Dijkstra-lite 4-dir: acumula move_cost do terreno; blocked é intransponível.
+	var cost: Dictionary = {origin: 0}
+	var frontier: Array[Vector2i] = [origin]
+	var result: Array[Vector2i] = [origin]
+	while not frontier.is_empty():
+		frontier.sort_custom(
+			func(a: Vector2i, b: Vector2i) -> bool: return cost.get(a, 9999) < cost.get(b, 9999)
+		)
+		var cur: Vector2i = frontier.pop_front()
+		for n in board.grid.get_neighbors(cur):
+			if not board.is_walkable(n):
+				continue
+			var step: int = board.terrain.move_cost(n) if board.terrain != null else 1
+			var nc: int = int(cost[cur]) + step
+			if nc > budget:
+				continue
+			if cost.has(n) and int(cost[n]) <= nc:
+				continue
+			cost[n] = nc
+			if not result.has(n):
+				result.append(n)
+			if not frontier.has(n):
+				frontier.append(n)
+	return result
 
 
 func can_move_to(unit: Unit, target: Vector2i) -> bool:
@@ -43,6 +69,9 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 	if path.is_empty():
 		return false
 	board.update_occupancy(unit, old, target)
+	# piso de dano: aplica delta uma vez ao entrar (consumidor Unit.stats)
+	if board.terrain != null:
+		board.terrain.on_unit_entered(unit, target)
 	# ocupação imediata (consumidor board), animação tween 0.70 per-cell + 4-dir waypoints
 	var path_world: Array[Vector3] = []
 	for c in path:
@@ -80,7 +109,7 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 
 
 func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
-	# A* simples Manhattan
+	# A* Manhattan ponderado pelo custo de terreno (blocked intransponível)
 	if from == to:
 		return [from]
 	var open: Array[Vector2i] = [from]
@@ -102,7 +131,8 @@ func find_path(from: Vector2i, to: Vector2i) -> Array[Vector2i]:
 				continue
 			if not board.is_walkable(n) and n != to:
 				continue
-			var tentative: int = g_score[cur] + 1
+			var step_cost: int = board.terrain.move_cost(n) if board.terrain != null else 1
+			var tentative: int = int(g_score[cur]) + step_cost
 			if tentative < g_score.get(n, 9999):
 				came_from[n] = cur
 				g_score[n] = tentative

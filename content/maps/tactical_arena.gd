@@ -34,6 +34,9 @@ func _ready() -> void:
 
 	# Setup board — fonte única é TacticalBoard.grid_size/cell_size (default 8x8 já no .tscn)
 	board.grid = GridSystem.new(board.grid_size, board.cell_size)
+	var terrain_node: TerrainLayer = get_node_or_null("TerrainLayer") as TerrainLayer
+	if terrain_node and terrain_node.layout != null:
+		board.terrain = terrain_node
 	_spawn_tiles()
 	_spawn_units()
 	# sync CameraRig grid_limit com board
@@ -176,6 +179,13 @@ func _update_turn_arrow(unit: Unit) -> void:
 
 func _spawn_tiles() -> void:
 	_ensure_tile_mats()
+	# materiais de terreno (placeholder unshaded): bloqueado escuro, dano laranja
+	var blocked_mat := StandardMaterial3D.new()
+	blocked_mat.albedo_color = Color(0.22, 0.22, 0.26)
+	blocked_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var damage_mat := StandardMaterial3D.new()
+	damage_mat.albedo_color = Color(1.0, 0.45, 0.2, 0.9)
+	damage_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var container: Node3D = $TacticalBoard/Tiles
 	if container == null:
 		container = Node3D.new()
@@ -183,11 +193,17 @@ func _spawn_tiles() -> void:
 		board.add_child(container)
 	for x in board.grid_size.x:
 		for y in board.grid_size.y:
+			var cell := Vector2i(x, y)
 			var tile: Node3D = preload("res://placeholders/tactical/tile_cube.tscn").instantiate()
-			tile.position = board.grid.cell_to_world(Vector2i(x, y))
+			tile.position = board.grid.cell_to_world(cell)
 			var mesh: MeshInstance3D = tile as MeshInstance3D
 			if mesh:
-				mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
+				if board.terrain != null and board.terrain.is_blocked(cell):
+					mesh.material_override = blocked_mat
+				elif board.terrain != null and board.terrain.layout.is_damage_floor(cell):
+					mesh.material_override = damage_mat
+				else:
+					mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
 			else:
 				push_warning("[TacticalArena] tile_cube root não é MeshInstance3D")
 			container.add_child(tile)

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="BoardLayoutResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://systems/tactical/terrain/board_layout_resource.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+size = Vector2i(8, 8)
+damage_delta = -2
+rows = PackedStringArray("........", "..##....", "..##..3.", "........", "....^...", "...44...", "........", "........")
