@@ -9,6 +9,7 @@ extends Node3D
 
 var selected_unit: Unit = null
 var selected_ability: AbilityResource = null
+var moves_left: int = 1  # 1 movimento por turno (GDD: Mover + Ação)
 var _db: AttributeDatabase = null
 var _green_mat: StandardMaterial3D = null
 var _blue_mat: StandardMaterial3D = null
@@ -241,6 +242,7 @@ func _create_unit(name: String, team: int, cell: Vector2i, col: Color) -> Unit:
 
 func _on_turn_started(unit: Unit) -> void:
 	selected_unit = unit
+	moves_left = 1  # reseta 1 movimento/turno
 	_update_turn_label(unit)
 	print("[Turn] Vez de %s (team %d) em %s" % [unit.display_name, unit.team, unit.cell])
 	# destaca alcance
@@ -460,12 +462,23 @@ func _handle_tap(pos: Vector2) -> void:
 		print("[Input] Unidade aliada/própria em %s, sem ataque (sem explosão)" % cell)
 		return
 	if board.is_walkable(cell):
+		# lock anti-stack: ignora tap durante animação de movimento
+		if movement.is_moving(unit):
+			print("[Input] %s ainda movendo, tap ignorado" % unit.display_name)
+			return
+		# 1 movimento por turno (GDD: Mover + Ação)
+		if moves_left <= 0:
+			print("[Input] Sem movimentos neste turno — use habilidade ou Passar Turno")
+			return
 		if movement.can_move_to(unit, cell):
-			movement.move_unit(unit, cell)
-			print("[Move] %s -> %s" % [unit.display_name, cell])
-			_highlight_reachable(unit)
-		else:
-			print("[Move] Não pode mover para %s" % cell)
+			if movement.move_unit(unit, cell):
+				moves_left -= 1
+				print("[Move] %s -> %s (%d restantes)" % [unit.display_name, cell, moves_left])
+				if moves_left <= 0:
+					for c in get_tree().get_nodes_in_group("highlight"):
+						c.queue_free()  # limpa verde; mantém azul da habilidade
+			else:
+				print("[Move] Não pode mover para %s" % cell)
 
 
 func _show_unit_info(pos: Vector2) -> void:

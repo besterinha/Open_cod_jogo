@@ -1,12 +1,25 @@
 class_name MovementSystem
 extends Node
 # Sistema genérico: floodfill para alcance + A* para caminho.
+# Lock anti-stack: 1 tween por unidade — move_unit rejeita enquanto anima (bug multi-tap).
 
 var board: TacticalBoard
+var _active: Dictionary = {}  # unit instance_id -> Tween
 
 
 func setup(p_board: TacticalBoard) -> void:
 	board = p_board
+
+
+func is_moving(unit: Unit) -> bool:
+	var id: int = unit.get_instance_id()
+	if not _active.has(id):
+		return false
+	var tw: Tween = _active[id] as Tween
+	if tw == null or not tw.is_valid() or not tw.is_running():
+		_active.erase(id)
+		return false
+	return true
 
 
 func get_reachable(unit: Unit) -> Array[Vector2i]:
@@ -21,6 +34,8 @@ func can_move_to(unit: Unit, target: Vector2i) -> bool:
 
 
 func move_unit(unit: Unit, target: Vector2i) -> bool:
+	if is_moving(unit):
+		return false  # lock anti-stack: nunca 2 tweens na mesma unidade (aceleração/diagonal)
 	if not can_move_to(unit, target):
 		return false
 	var old: Vector2i = unit.cell
@@ -38,6 +53,7 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 		unit.moved.emit(target)
 		return true
 	const SEC_PER_CELL: float = 0.70
+	var id: int = unit.get_instance_id()
 	var tw: Tween = unit.create_tween()
 	tw.set_parallel(false)
 	# 4-dir waypoints: slide sequencial por célula (não linha reta diagonal) + bob y no mesmo tween
@@ -53,7 +69,13 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 			1.0,
 			SEC_PER_CELL
 		)
-	tw.finished.connect(func() -> void: unit.moved.emit(target), CONNECT_ONE_SHOT)
+	tw.finished.connect(
+		func() -> void:
+			_active.erase(id)
+			unit.moved.emit(target),
+		CONNECT_ONE_SHOT
+	)
+	_active[id] = tw
 	return true
 
 
