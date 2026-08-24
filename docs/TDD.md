@@ -192,8 +192,8 @@ Input → handler → estado seleção → sistema turno lido. Teste que `assert
 ## 4b. Movimento Tático — 4-dir + 0.70s per-cell
 `MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` (dobro 0.35) via `Tween` `SINE`, não linha reta. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info.
 
-## 8. Validação & Testes — Pirâmide 70/25/5 (não só isolado)
-Ver `AGENTS.md` + `docs/STYLE.md`. Pirâmide: `70% Unit / 25% Integração / 5% Contrato+Smoke+E2E`.
+## 8. Validação & Testes — Pirâmide 50/25/25 (realista, ADR-007; era 70/25/5 genérico)
+Ver `AGENTS.md` + `docs/STYLE.md`. Pirâmide real pós-PASSO1: `50% Unit / 25% Integração / 25% Contrato+Smoke+E2E+Regression` (`grep ^func test_` 45/25/26 de 96). Piso guardião `40/20/35` em `test_piramide_contract`. Ver `docs/ADR/ADR-007-piramide-realista.md`.
 
 Pipeline (ordem bloqueia PR):
 1.  **Import + Compile:** `godot --headless --import` + `godot --headless --check-only` + `.editorconfig` Tab/LF
