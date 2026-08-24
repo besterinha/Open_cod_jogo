@@ -108,6 +108,16 @@ jobs:
           mkdir -p build
           godot --headless --export-debug "Android" build/debug.apk
           ls -lh build/debug.apk
+      - name: APK content guard (recursos críticos no pacote)
+        run: |
+          apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 || true
+          bash ci/check-apk-content.sh build/debug.apk
+      - name: Tripwire export-safe (DirAccess sem marcador)
+        run: |
+          HITS=$(grep -rn "DirAccess" systems/ ui/ content/ --include="*.gd" | grep -v "export-safe" || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::DirAccess em systems/ui/content sem '# export-safe':"; echo "$HITS"; exit 1
+          fi
 
 # Branch protection (manual, fora do YAML): GitHub → Settings → Branches → Require status checks: validate (Contract, Unit, Integration, Smoke) + Disallow force push
 # Isso fecha brecha #4 (push direto em main)

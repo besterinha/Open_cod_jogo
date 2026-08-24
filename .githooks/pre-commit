@@ -23,6 +23,19 @@ if command -v gdlint >/dev/null 2>&1; then
 else
   echo "pre-commit: gdlint não instalado, pulando (instale gdtoolkit 4.5.0)"
 fi
+# Tripwire export-safe: DirAccess em código novo de systems/ui/content exige marcador
+# (listagem de res:// não existe dentro do APK — bug device pós-T2)
+STAGED_GD=$(git diff --cached --name-only --diff-filter=ACM -- 'systems/*.gd' 'ui/*.gd' 'content/**/*.gd' 2>/dev/null)
+if [ -n "$STAGED_GD" ]; then
+  VIOL=$(git diff --cached -U0 -- $STAGED_GD | grep "^+" | grep "DirAccess" | grep -v "export-safe" || true)
+  if [ -n "$VIOL" ]; then
+    echo "pre-commit: tripwire export-safe — DirAccess novo sem '# export-safe' próximo:"
+    echo "$VIOL"
+    echo "Listagem de res:// não funciona no APK. Use ResourceLoader.exists com lista explícita"
+    echo "(padrão BASE_ABILITY_PATHS) OU marque a linha com # export-safe + justificativa no TDD."
+    exit 1
+  fi
+fi
 # gdformat BLOQUEANTE (ETAPA 2) — alinhado com docs/STYLE.md Tab, base zerada
 echo "pre-commit: Gate 0 gdformat (BLOQUEANTE ETAPA 2)..."
 if command -v gdformat >/dev/null 2>&1; then

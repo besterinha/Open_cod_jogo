@@ -27,18 +27,35 @@ func clear_events() -> void:
 	_events.clear()
 
 
+const BASE_EVENT_PATHS: Array[String] = [
+	# export-safe: lista explícita funciona dentro do APK (TDD §4e)
+	"res://data/events/supply_raid.tres",
+	"res://data/events/blizzard.tres",
+	"res://data/events/wild_fruit.tres",
+]
+
+
 func load_from_data(path: String = "res://data/events/") -> void:
-	# Carrega todos .tres em data/events/
-	var dir := DirAccess.open(path)
+	# híbrido export-safe: lista explícita primeiro + glob só onde disponível
+	for p in BASE_EVENT_PATHS:
+		if ResourceLoader.exists(p):
+			var ev: Resource = load(p)
+			if ev is EventResource:
+				register_event(ev as EventResource)
+	var dir := DirAccess.open(path)  # export-safe: complementar à lista acima
 	if dir == null:
 		return
 	dir.list_dir_begin()
 	var file: String = dir.get_next()
+	var seen: Dictionary = {}
+	for ev in _events:
+		seen[ev.id] = true
 	while file != "":
 		if file.ends_with(".tres") and not dir.current_is_dir():
-			var ev: Resource = load(path + file)
-			if ev is EventResource:
-				register_event(ev as EventResource)
+			var ev2: Resource = load(path + file)
+			if ev2 is EventResource and not seen.has((ev2 as EventResource).id):
+				register_event(ev2 as EventResource)
+				seen[(ev2 as EventResource).id] = true
 		file = dir.get_next()
 	dir.list_dir_end()
 

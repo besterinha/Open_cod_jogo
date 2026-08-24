@@ -222,7 +222,15 @@ Schema IA em `#schema-ia`. Próximas fases: T3 status effects, T4 classes/target
 `AreaShape` (Resource Strategy): `get_cells(origin, target, grid) -> Array[Vector2i]`. Built-ins registrados em `AreaShapeRegistry` (`systems/ability/areas/`): `single, 3x3, cross, line` (legado) + `cone (length)`, `ring (radius)`.
 - **Plug:** `AbilityResource.area_shape: AreaShape` no `.tres` vence a string legada; sem shape, `resolve_area_cells` delega ao registry pelo id
 - **Validator:** com `area_shape` setado pula whitelist de strings; valida interface `get_cells`
-- **HUD plug = soltar `.tres` em `data/abilities/`** — glob substituiu lista fixa de 3
+- **HUD plug = soltar `.tres` em `data/abilities/`** + registrar path em `BASE_ABILITY_PATHS` (HUD) — glob é complemento só no editor
+
+## 4e. Regra Export-Safe — res:// não tem pastas dentro do APK (2026-08-24)
+Listagem de diretório (`DirAccess.open/list_dir`) **não existe no pacote exportado** — funciona só no editor. Bugs device pós-T1/T2 (botões sumiram, mapa ausente) tiveram essa raiz.
+- **Padrão obrigatório:** lista explícita de paths via `ResourceLoader.exists`+`load` primeiro (funciona empacotado), glob `DirAccess` só como extra dedupado onde disponível — ex: `BASE_ABILITY_PATHS` (HUD), `BASE_EVENT_PATHS` (EventSystem)
+- **Ext_resource de Resource custom pode não bindar no device:** fallback `load(path)` direto no `_ready` (ex: layout da arena) + `push_error` visível
+- **Guardas mecânicas:** tripwire `DirAccess` sem `# export-safe` bloqueia pre-commit e CI; `ci/check-apk-content.sh` falha se recurso crítico sumir do APK
+- **Critério de pronto (device):** toda feature touch/export responde *"o que quebra só no celular?"* antes de fechado; validação manual no Redmi cobre o que headless não vê
+- Pacing IA: `_play_ai` espera `is_moving(unit)` terminar antes de agir/end_turn (regression ai_pacing)
 - Exemplos: `data/abilities/conejato.tres`, `anelado.tres` (origem gyms/example_dev/habilidades_area/)
 
 ## 4b. Movimento Tático — 4-dir + 0.70s per-cell

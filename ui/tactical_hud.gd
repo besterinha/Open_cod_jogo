@@ -20,25 +20,44 @@ func _ready() -> void:
 	EventBus.turn_changed.connect(_on_turn_changed)
 
 
+const BASE_ABILITY_PATHS: Array[String] = [
+	# export-safe: listagem de diretório NÃO existe no pacote — toda habilidade
+	# que deve aparecer no device precisa estar nesta lista (TDD §4e)
+	"res://data/abilities/strike.tres",
+	"res://data/abilities/heal.tres",
+	"res://data/abilities/fireball.tres",
+	"res://data/abilities/conejato.tres",
+	"res://data/abilities/anelado.tres",
+]
+
+
 func _load_abilities() -> void:
 	# limpa antigos (mantém EndTurn)
 	for child in hbox.get_children():
 		if child != end_btn and child is Button:
 			child.queue_free()
 	_abilities.clear()
-	# T2: plug = soltar .tres em data/abilities/ — glob substitui lista fixa
-	var dir := DirAccess.open("res://data/abilities/")
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var file: String = dir.get_next()
-	while file != "":
-		if file.ends_with(".tres") and not dir.current_is_dir():
-			var a: Resource = load("res://data/abilities/" + file)
+	var loaded_ids: Dictionary = {}
+	# 1) lista export-safe (funciona dentro do APK)
+	for p in BASE_ABILITY_PATHS:
+		if ResourceLoader.exists(p):
+			var a: Resource = load(p)
 			if a is AbilityResource:
 				_add_ability(a as AbilityResource)
-		file = dir.get_next()
-	dir.list_dir_end()
+				loaded_ids[(a as AbilityResource).id] = true
+	# 2) glob extra apenas onde disponível (editor/dev) — export-safe: evita duplicar
+	var dir := DirAccess.open("res://data/abilities/")  # export-safe: complementar à lista acima
+	if dir != null:
+		dir.list_dir_begin()
+		var file: String = dir.get_next()
+		while file != "":
+			if file.ends_with(".tres") and not dir.current_is_dir():
+				var a: Resource = load("res://data/abilities/" + file)
+				if a is AbilityResource and not loaded_ids.has((a as AbilityResource).id):
+					_add_ability(a as AbilityResource)
+					loaded_ids[(a as AbilityResource).id] = true
+			file = dir.get_next()
+		dir.list_dir_end()
 	_update_selection()
 
 

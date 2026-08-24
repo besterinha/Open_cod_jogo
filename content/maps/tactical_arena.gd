@@ -35,8 +35,15 @@ func _ready() -> void:
 	# Setup board — fonte única é TacticalBoard.grid_size/cell_size (default 8x8 já no .tscn)
 	board.grid = GridSystem.new(board.grid_size, board.cell_size)
 	var terrain_node: TerrainLayer = get_node_or_null("TerrainLayer") as TerrainLayer
-	if terrain_node and terrain_node.layout != null:
+	if terrain_node != null and terrain_node.layout == null:
+		# export-safe: ext_resource pode não bindar — fallback por path direto
+		var fallback: Resource = load("res://data/maps/tactical_arena.tres")
+		if fallback is BoardLayoutResource:
+			terrain_node.layout = fallback as BoardLayoutResource
+	if terrain_node != null and terrain_node.layout != null:
 		board.terrain = terrain_node
+	else:
+		push_error("[TacticalArena] TerrainLayer sem layout — grid ficará todo-livre")
 	_spawn_tiles()
 	_spawn_units()
 	# sync CameraRig grid_limit com board
@@ -108,6 +115,12 @@ func _ready() -> void:
 
 var _light_mat: StandardMaterial3D = null
 var _dark_mat: StandardMaterial3D = null
+
+
+func _exit_tree() -> void:
+	# evita "Infinite loop detected" do bob set_loops após free da cena (vazava p/ testes)
+	if _arrow_tween:
+		_arrow_tween.kill()
 
 
 func _ensure_tile_mats() -> void:
@@ -266,6 +279,8 @@ func _on_turn_started(unit: Unit) -> void:
 	# se for inimigo, AI joga após delay
 	if unit.team == 1:
 		await get_tree().create_timer(0.8).timeout
+		if not is_inside_tree() or not is_instance_valid(unit) or unit.is_defeated():
+			return
 		_play_ai(unit)
 
 
@@ -275,15 +290,21 @@ func _play_ai(unit: Unit) -> void:
 	var intent: Dictionary = ai.generate_intent(unit, board)
 	if intent.has("move_to"):
 		var dest: Vector2i = intent["move_to"]
-		if dest != unit.cell:
+		if dest != unit.cell and movement.move_unit(unit, dest):
 			print("[AI] %s move %s -> %s" % [unit.display_name, unit.cell, dest])
-			movement.move_unit(unit, dest)
+			# pacing: espera a animação terminar antes de agir/passar a vez
+			while movement.is_moving(unit):
+				if not is_inside_tree() or not is_instance_valid(unit):
+					return
+				await get_tree().process_frame
 	if intent.has("target"):
 		var target_cell: Vector2i = intent["target"]
 		var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource
 		print("[AI] %s ataca %s com %s" % [unit.display_name, target_cell, abil.nome])
 		combat.use_ability(unit, abil, target_cell)
-	await get_tree().create_timer(0.5).timeout
+	await get_tree().create_timer(0.3).timeout
+	if not is_inside_tree():
+		return
 	turn_manager.end_turn()
 
 
