@@ -35,9 +35,8 @@ func test_hud_and_logic_agree_on_cost() -> void:
 	var hud := preload("res://ui/tactical_hud.tscn").instantiate() as Control
 	add_child_autofree(hud)
 	await get_tree().process_frame
-	# força atualizar com unidade atual
-	if hud.has_method("_on_turn_changed"):
-		hud.call("_on_turn_changed", atk)
+	# força atualizar com unidade atual via boundary real (EventBus -> HUD consumidor)
+	EventBus.turn_changed.emit(atk)
 	await get_tree().process_frame
 	# checa botão fireball desabilitado
 	var fire_btn: Button = hud.get_node_or_null("HBox/fireball") as Button

@@ -1,6 +1,17 @@
 extends GutTest
 # Input real 4-dir com assert no CONSUMIDOR downstream (board/turn), não só emissor
-# Boundary: movimento -> board.occupancy + turn (consumidores)
+# Boundary: tap (unproject + _handle_tap) -> MovementSystem -> Board.occupancy
+# Regra §7b: act via handler real, assert no consumidor.
+
+
+func _pegar_hero(board: TacticalBoard, turn: TurnManager) -> Unit:
+	var unit: Unit = turn.get_current_unit()
+	if unit == null or unit.team != 0:
+		for u in board.units:
+			if u.team == 0 and not u.is_defeated():
+				unit = u
+				break
+	return unit
 
 
 func test_move_4dir_waypoints_com_input_real() -> void:
@@ -13,44 +24,37 @@ func test_move_4dir_waypoints_com_input_real() -> void:
 	var turn: TurnManager = arena.get_node_or_null("TurnManager") as TurnManager
 	assert_not_null(board)
 	assert_not_null(movement)
-	# pega hero da vez (team 0)
-	var unit: Unit = turn.get_current_unit()
-	if unit == null or unit.team != 0:
-		# força hero0
-		for u in board.units:
-			if u.team == 0 and not u.is_defeated():
-				unit = u
-				break
+	var unit: Unit = _pegar_hero(board, turn)
 	assert_not_null(unit)
 	var start: Vector2i = unit.cell
-	# força path com obstáculo: bloqueia diagonal artificial
-	# usa ponto 2 células à frente se livre, senão 1
+	# destino walkable 1-2 células à direita
 	var target: Vector2i = start + Vector2i(2, 0)
 	if not board.grid.is_within_bounds(target) or not board.is_walkable(target):
 		target = start + Vector2i(1, 0)
 	if not board.is_walkable(target):
 		target = start
-	assert_true(
-		movement.can_move_to(unit, target) or target == start, "target deve ser walkable para teste"
-	)
 	if target == start:
-		return  # sem movimento possível, teste passa
-	var before_pos: Vector3 = unit.position
-	watch_signals(unit)
-	watch_signals(board)
-	var path: Array[Vector2i] = movement.find_path(start, target)
-	assert_true(path.size() >= 2, "path deve ter waypoints (4-dir), não linha reta")
+		return  # sem movimento possível neste layout
 	# diagonal (1,1) não deve estar em reachable range 1 (4-dir)
 	var reach1: Array[Vector2i] = board.grid.get_reachable(
 		start, 1, func(c: Vector2i) -> bool: return board.is_walkable(c) or c == start
 	)
 	assert_false(reach1.has(start + Vector2i(1, 1)), "diagonal não deve estar em reachable 4-dir")
-	# act: input real via movement (não unit.move_to direto)
-	var ok: bool = movement.move_unit(unit, target)
-	assert_true(ok, "move_unit deve aceitar")
-	# assert no CONSUMIDOR downstream imediato (board occupancy)
-	assert_eq(unit.cell, target, "emissor cell deve atualizar imediatamente para occupancy")
-	assert_eq(board.get_unit_at(target), unit, "board (consumidor) deve ver unit no destino")
+	var path: Array[Vector2i] = movement.find_path(start, target)
+	assert_true(path.size() >= 2, "path deve ter waypoints (4-dir), não linha reta")
+	watch_signals(board)
+	var before_pos: Vector3 = unit.position
+	# ACT input real: unproject do destino + handler real (não move_unit direto)
+	var cam: Camera3D = arena.get_node_or_null("CameraRig/Camera3D") as Camera3D
+	assert_not_null(cam)
+	var screen_pos: Vector2 = cam.unproject_position(board.grid.cell_to_world(target))
+	arena.call("_handle_tap", screen_pos)
+	await get_tree().process_frame
+	# ASSERT no CONSUMIDOR downstream imediato (board occupancy)
+	assert_eq(
+		board.get_unit_at(target), unit, "board (consumidor) deve ver unit no destino logo após tap"
+	)
+	assert_eq(unit.cell, target, "emissor cell atualiza imediato p/ occupancy")
 	assert_true(
 		board.is_walkable(start) or board.get_unit_at(start) == null,
 		"origem deve ficar livre (board consumidor)"
@@ -60,7 +64,7 @@ func test_move_4dir_waypoints_com_input_real() -> void:
 		unit.position.distance_to(before_pos) < 0.1,
 		"posição não deve teleportar (tween downstream)"
 	)
-	var wait: float = 0.70 * (path.size() - 1) + 0.3
+	var wait: float = 0.70 * float(path.size() - 1) + 0.3
 	await get_tree().create_timer(wait).timeout
 	var end_world: Vector3 = board.grid.cell_to_world(target)
 	assert_true(

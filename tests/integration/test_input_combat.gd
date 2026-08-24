@@ -1,40 +1,66 @@
 extends GutTest
-# Integração Input -> Combat via _handle_tap raycast
+# Integração Input -> Combat via handler real (§7b): HUD botão -> _handle_tap raycast
+# Assert no CONSUMIDOR downstream (Combat signals + hp do alvo + Turn avançou)
 
 
-func test_tap_em_inimigo_dispara_combate() -> void:
-	# Teste isolado sem depender do arena default (que tem inimigos longe)
-	var board := TacticalBoard.new()
-	board.grid_size = Vector2i(5, 5)
-	board.grid = GridSystem.new(Vector2i(5, 5), 1.0)
-	add_child_autofree(board)
-	var unit := Unit.new()
-	unit.unit_id = "hero"
-	unit.display_name = "Hero"
-	unit.team = 0
-	unit.cell = Vector2i(0, 0)
-	unit.stats = UnitStats.new()
-	unit.stats.set_stat("hp", 10)
-	unit.stats.set_stat("willpower", 5)
-	board.add_unit(unit)
-	var enemy := Unit.new()
-	enemy.unit_id = "enemy"
-	enemy.display_name = "Enemy"
-	enemy.team = 1
-	enemy.cell = Vector2i(0, 1)  # ao lado, alcance 1
-	enemy.stats = UnitStats.new()
-	enemy.stats.set_stat("hp", 10)
-	board.add_unit(enemy)
-	var cm := CombatManager.new()
-	cm.setup(board)
-	add_child_autofree(cm)
-	var abil: AbilityResource = load("res://data/abilities/strike.tres") as AbilityResource
-	watch_signals(cm)
+func test_tap_em_inimigo_dispara_combate_input_real() -> void:
+	var arena: Node3D = preload("res://content/maps/tactical_arena.tscn").instantiate() as Node3D
+	add_child_autofree(arena)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var board: TacticalBoard = arena.get_node_or_null("TacticalBoard") as TacticalBoard
+	var combat: CombatManager = arena.get_node_or_null("CombatManager") as CombatManager
+	var turn: TurnManager = arena.get_node_or_null("TurnManager") as TurnManager
+	assert_not_null(board)
+	assert_not_null(combat)
+	var hero: Unit = turn.get_current_unit()
+	if hero == null or hero.team != 0:
+		for u in board.units:
+			if u.team == 0 and not u.is_defeated():
+				hero = u
+				break
+	assert_not_null(hero)
+	var enemy: Unit = null
+	for u in board.units:
+		if u.team == 1 and not u.is_defeated():
+			enemy = u
+			break
+	assert_not_null(enemy)
+	# ARRANGE: aproxima inimigo p/ alcance 1 do hero (arranjo não é input)
+	var nb: Vector2i = hero.cell + Vector2i(1, 0)
+	if not board.grid.is_within_bounds(nb) or not board.is_walkable(nb):
+		nb = hero.cell + Vector2i(0, 1)
+	assert_true(board.is_walkable(nb), "vizinho do hero deve estar livre para o arrange")
+	var old_enemy_cell: Vector2i = enemy.cell
+	board.update_occupancy(enemy, old_enemy_cell, nb)
+	enemy.cell = nb
+	enemy.position = board.grid.cell_to_world(nb)
+	# ACT 1 — seleciona habilidade pelo botão real do HUD (boundary UI)
+	var hud: Control = arena.get_node_or_null("CanvasLayer/TacticalHUD") as Control
+	assert_not_null(hud, "HUD deve existir na arena")
+	await get_tree().process_frame
+	var strike_btn: Button = hud.get_node_or_null("HBox/strike") as Button
+	assert_not_null(strike_btn, "botão strike deve existir no HUD")
+	strike_btn.pressed.emit()
+	await get_tree().process_frame
+	# ACT 2 — tap real na célula do inimigo via unproject + handler
+	var cam: Camera3D = arena.get_node_or_null("CameraRig/Camera3D") as Camera3D
+	assert_not_null(cam)
+	var screen_pos: Vector2 = cam.unproject_position(board.grid.cell_to_world(enemy.cell))
+	watch_signals(combat)
 	var before_hp: int = enemy.get_stat("hp")
-	var ok: bool = cm.use_ability(unit, abil, enemy.cell)
-	assert_true(ok)
-	assert_signal_emitted(cm, "damage_applied")
-	assert_eq(enemy.get_stat("hp"), before_hp - 4)
+	arena.call("_handle_tap", screen_pos)
+	await get_tree().process_frame
+	await get_tree().create_timer(0.1).timeout
+	# ASSERT no CONSUMIDOR downstream
+	assert_signal_emitted(combat, "ability_used", "tap em inimigo deve usar habilidade")
+	assert_signal_emitted(combat, "damage_applied", "dano deve chegar ao consumidor Combat")
+	assert_eq(enemy.get_stat("hp"), before_hp - 4, "strike -4 no consumidor Unit.stats")
+	assert_ne(
+		turn.get_current_unit(),
+		hero,
+		"turno deve passar após ataque bem-sucedido (consumidor Turn)"
+	)
 
 
 func test_tap_fora_alcance_nao_consume() -> void:

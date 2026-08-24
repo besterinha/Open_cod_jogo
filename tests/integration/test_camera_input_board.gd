@@ -64,15 +64,23 @@ func test_highlight_limpa_ao_trocar_turno() -> void:
 	add_child_autofree(arena)
 	await get_tree().process_frame
 	await get_tree().process_frame
-	var board: TacticalBoard = arena.get_node_or_null("TacticalBoard") as TacticalBoard
-	assert_not_null(board)
+	var turn: TurnManager = arena.get_node_or_null("TurnManager") as TurnManager
+	assert_not_null(turn)
 	# aguarda turno inicial criar highlights
 	await get_tree().process_frame
-	var highlights_before: int = get_tree().get_nodes_in_group("highlight").size()
-	assert_true(highlights_before > 0, "deve ter highlights no turno inicial")
-	# força limpar ao trocar turno
-	if arena.has_method("_clear_highlights"):
-		arena.call("_clear_highlights")
-		await get_tree().process_frame
-		var after: int = get_tree().get_nodes_in_group("highlight").size()
-		assert_eq(after, 0, "clear deve remover highlights")
+	var ids_before: Dictionary = {}
+	for n in get_tree().get_nodes_in_group("highlight"):
+		ids_before[n.get_instance_id()] = true
+	assert_true(ids_before.size() > 0, "deve ter highlights no turno inicial")
+	# ACT — troca de turno real via boundary do TurnManager (não _clear_highlights direto)
+	turn.end_turn()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	# ASSERT no consumidor (cena): highlights antigos liberados, novos recriados
+	var fresh: Array[Node] = get_tree().get_nodes_in_group("highlight")
+	assert_true(fresh.size() > 0, "novo turno deve repopular highlights")
+	for n in fresh:
+		assert_false(
+			ids_before.has(n.get_instance_id()),
+			"highlight antigo deve ser limpo ao trocar turno (queue_free)"
+		)
