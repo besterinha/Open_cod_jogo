@@ -77,12 +77,6 @@ func pay_cost(cost: Dictionary) -> bool:
 	return ok
 
 
-func move_to(new_cell: Vector2i, grid: GridSystem) -> void:
-	cell = new_cell
-	position = grid.cell_to_world(cell)
-	moved.emit(cell)
-
-
 func _update_visual() -> void:
 	# atualiza Label3D se existir (Unit/Label é irmão de Visual, não Visual/Label)
 	if has_node("Label"):

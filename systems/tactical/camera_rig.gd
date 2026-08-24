@@ -10,7 +10,6 @@ extends Node3D
 @export var grid_limit: Vector2i = Vector2i(8, 8)
 
 var _dragging: bool = false
-var _last_drag_pos: Vector2 = Vector2.ZERO
 var _active_touches: Dictionary = {}  # index -> Vector2
 var _pinch_start_dist: float = 0.0
 var _pinch_start_size: float = 0.0
@@ -79,7 +78,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed:
 			_active_touches[event.index] = event.position
 			_dragging = true
-			_last_drag_pos = event.position
 			if _active_touches.size() == 2:
 				# inicia pinch: registra distância inicial
 				var keys: Array = _active_touches.keys()

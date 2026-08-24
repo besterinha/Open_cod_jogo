@@ -81,5 +81,5 @@ func test_e2e_save_apos_vitoria() -> void:
 	assert_true(SaveSystem.save())
 	assert_true(SaveSystem.load_save())
 	var loaded: Dictionary = SaveSystem.get_data()
-	assert_eq(loaded["day"], 11)
-	assert_eq(loaded["renown"], 5)
+	assert_eq(int(loaded["day"]), 11, "dia persistido (JSON number -> int)")
+	assert_eq(int(loaded["renown"]), 5, "renown persistido")

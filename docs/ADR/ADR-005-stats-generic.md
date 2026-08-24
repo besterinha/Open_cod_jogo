@@ -10,7 +10,7 @@ Usuário não quer travar lógica de combate em Banner Saga (HP+Armor). Quer mot
 - `UnitStats` (`Dictionary[stat_id -> int]`) validado contra `AttributeDatabase`.
 - `StatsRegistry` carrega `data/stats/` e valida custos/efeitos.
 - `AbilityResource.custo: Dictionary` e `efeitos: Array[Dictionary]` referenciam `stat_id` genérico, não `willpower` hardcoded.
-- `ICombatResolver` (Strategy) lê stats genéricos, 3 exemplos em `gyms/resolvers/` provam troca sem tocar Core.
+- `ICombatResolver` (Strategy) lê stats genéricos, 3 exemplos em `systems/tactical/combat/resolvers/examples/` provam troca sem tocar Core (movidos de gyms/ — tests dependem do build).
 
 ## Alternativas
 - A) Stats fixos hardcode `hp/armor/willpower` — simples mas trava design.
@@ -26,4 +26,4 @@ Usuário não quer travar lógica de combate em Banner Saga (HP+Armor). Quer mot
 
 ## Referências
 - TDD.md#4.3b
-- gyms/resolvers/
+- systems/tactical/combat/resolvers/examples/ (ex-gyms/resolvers)

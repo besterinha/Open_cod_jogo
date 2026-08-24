@@ -1,7 +1,13 @@
 extends CombatResolver
 # Exemplo HP puro — ignora armor, dano direto em hp.
 
-func resolve(_attacker_stats: UnitStats, _defender_stats: UnitStats, ability: AbilityResource, _db: AttributeDatabase) -> Dictionary:
+
+func resolve(
+	_attacker_stats: UnitStats,
+	_defender_stats: UnitStats,
+	ability: AbilityResource,
+	_db: AttributeDatabase
+) -> Dictionary:
 	var dano: int = 0
 	for e in ability.efeitos:
 		if e is Dictionary and e.get("stat_id") == "hp":

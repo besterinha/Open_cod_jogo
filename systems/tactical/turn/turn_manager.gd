@@ -11,6 +11,7 @@ signal battle_ended(winner_team: int)
 
 var current_round: int = 0
 var _current_unit: Unit = null
+var _battle_over: bool = false
 
 
 func setup(p_board: TacticalBoard) -> void:
@@ -38,12 +39,14 @@ func _next_turn() -> void:
 
 
 func check_victory() -> int:
-	if board == null:
+	if board == null or _battle_over:
 		return -1
 	if board.is_victory(0):
+		_battle_over = true
 		battle_ended.emit(0)
 		return 0
 	if board.is_victory(1):
+		_battle_over = true
 		battle_ended.emit(1)
 		return 1
 	return -1

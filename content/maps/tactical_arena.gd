@@ -20,7 +20,6 @@ var _arrow_tween: Tween = null
 var _touch_start: Vector2 = Vector2.ZERO
 var _is_drag: bool = false
 var _long_press_index: int = -1
-var _long_press_pos: Vector2 = Vector2.ZERO
 var _long_press_handled: bool = false
 
 
@@ -86,6 +85,13 @@ func _ready() -> void:
 	turn_manager.turn_started.connect(_on_turn_started)
 	turn_manager.battle_ended.connect(_on_battle_ended)
 	EventBus.turn_changed.connect(_on_turn_changed)
+	# vitória responsiva: derrota imediata consulta check_victory (guarda anti-duplo-emissão no TurnManager)
+	board.unit_added.connect(
+		func(u: Unit) -> void:
+			u.unit_defeated.connect(func(_x: Unit) -> void: turn_manager.check_victory())
+	)
+	for u in board.units:
+		u.unit_defeated.connect(func(_x: Unit) -> void: turn_manager.check_victory())
 
 	print(
 		(
@@ -179,7 +185,10 @@ func _spawn_tiles() -> void:
 			var tile: Node3D = preload("res://placeholders/tactical/tile_cube.tscn").instantiate()
 			tile.position = board.grid.cell_to_world(Vector2i(x, y))
 			var mesh: MeshInstance3D = tile as MeshInstance3D
-			mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
+			if mesh:
+				mesh.material_override = _light_mat if ((x + y) % 2) == 0 else _dark_mat
+			else:
+				push_warning("[TacticalArena] tile_cube root não é MeshInstance3D")
 			container.add_child(tile)
 
 
@@ -344,12 +353,8 @@ func _on_battle_ended(winner: int) -> void:
 		_arrow_tween.kill()
 	EventBus.battle_requested.emit("victory_%d" % winner)
 	await get_tree().create_timer(1.5).timeout
-	if winner == 0:
-		print("[Battle] Voltando para Jornada...")
-		get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
-	else:
-		print("[Battle] Derrota — Game Over (volta para jornada para teste)")
-		get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
+	print("[Battle] %s — voltando para Jornada..." % ("Vitória" if winner == 0 else "Derrota"))
+	get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")
 
 
 func _clear_highlights() -> void:
@@ -510,7 +515,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_is_drag = false
 			_long_press_handled = false
 			_long_press_index = event.index
-			_long_press_pos = event.position
 			# timer long-press 0.6s
 			var idx: int = event.index
 			var pos: Vector2 = event.position

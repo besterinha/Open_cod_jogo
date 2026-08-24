@@ -126,7 +126,9 @@ func test_combat_manager_genérico_custo_e_dano() -> void:
 	b.add_unit(atk)
 	b.add_unit(def)
 	var cm := CombatManager.new()
-	var resolver: CombatResolver = load("res://gyms/resolvers/resolver_banner_saga.gd").new()
+	var resolver: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/examples/resolver_banner_saga.gd").new()
+	)
 	cm.setup(b, resolver)
 	add_child_autofree(cm)
 	# fireball custo willpower 2, dano 6 hp

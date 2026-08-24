@@ -10,7 +10,7 @@ func test_fixture_v01_loads() -> void:
 	assert_not_null(parsed)
 	assert_true(parsed is Dictionary)
 	var dict: Dictionary = parsed as Dictionary
-	assert_eq(dict.get("day"), 1)
+	assert_eq(int(dict.get("day")), 1, "dia fixture (JSON->int)")
 	assert_true(dict.has("supplies"))
 	assert_true(dict.has("pop"))
 
@@ -29,6 +29,6 @@ func test_save_round_trip() -> void:
 	assert_true(save.save(), "save() deve escrever user://save.json")
 	assert_true(save.load_save(), "load_save() deve ler de volta")
 	var loaded: Dictionary = save.get_data()
-	assert_eq(loaded["day"], 5)
-	assert_eq(loaded["supplies"], 12)
-	assert_eq(loaded["morale"], 70)
+	assert_eq(int(loaded["day"]), 5, "dia roundtrip (JSON->int)")
+	assert_eq(int(loaded["supplies"]), 12, "supplies roundtrip")
+	assert_eq(int(loaded["morale"]), 70, "morale roundtrip")

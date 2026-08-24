@@ -18,7 +18,7 @@ gyms (isolado, .gitignore no build)
 CI bloqueia: `grep -r "gyms/" --include="*.gd" addons/ systems/ ui/` deve falhar.
 
 ### Stats Genéricos (Opção B — 100% data-driven)
-Você define atributos em `data/stats/attributes.tres` (`AttributeDefinition[]`). `UnitStats` guarda `Dictionary[stat_id -> value]` validado. `ICombatResolver` lê stats genéricos, sem hardcode `armor/strength`. Exemplos de resolvers em `gyms/` provam genericidade.
+Você define atributos em `data/stats/attributes.tres` (`AttributeDefinition[]`). `UnitStats` guarda `Dictionary[stat_id -> value]` validado. `ICombatResolver` lê stats genéricos, sem hardcode `armor/strength`. Exemplos de resolvers em `systems/tactical/combat/resolvers/examples/` provam genericidade.
 
 ### Pastas
 ```
@@ -190,7 +190,7 @@ Conversor: `systems/common/json_to_resource.gd` (JSON -> Resource). IA nunca edi
 Input → handler → estado seleção → sistema turno lido. Teste que `assert` só no emissor é `unidade isolada`; `integração input real` deve `assert` no **consumidor downstream** que lê o efeito (Board, Combat, Turn, HUD, EventBus). Critério: se componente tem consumidores conhecidos, `watch_signals(consumidor)` não `emissor`. Ver `tests/integration/template_input_real.gd` + `tests/integration/test_movement_4dir_input_real.gd`.
 
 ## 4b. Movimento Tático — 4-dir + 0.70s per-cell
-`MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` (dobro 0.35) via `Tween` `SINE`, não linha reta. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info.
+`MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` via `Tween` `SINE`, não linha reta. **Occupancy é imediata** ao iniciar o movimento (`update_occupancy` antes do tween) — previne 2 unidades na mesma célula durante a animação; posição visual chega depois (decisão ADR-007b). Bob do eixo y roda no mesmo tween via `tween_method`. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info. Vitória: `TeamRoundRobin._next_turn` chama `check_victory`; arena também conecta `unit_defeated -> check_victory`.
 
 ## 8. Validação & Testes — Pirâmide 50/25/25 (realista, ADR-007; era 70/25/5 genérico)
 Ver `AGENTS.md` + `docs/STYLE.md`. Pirâmide real pós-PASSO1: `50% Unit / 25% Integração / 25% Contrato+Smoke+E2E+Regression` (`grep ^func test_` 45/25/26 de 96). Piso guardião `40/20/35` em `test_piramide_contract`. Ver `docs/ADR/ADR-007-piramide-realista.md`.
@@ -224,7 +224,7 @@ godot --headless --script addons/gut/gut_cmdln.gd -gexit # tudo
 - **Fase 0 (Bootstrap):** project.godot 4.7.2 + estrutura + grid 8x8 + capsule anda (A*) + export Android APK debug ok.
 - **Fase 1 (Caravana MVP):** CaravanManager + Travel + Camp + Market + UI topbar, viajar 10 dias consome corretamente.
 - **Fase 2 (Eventos plugáveis):** EventSystem data-driven + 3 eventos + schema documentado para IA.
-- **Fase 3 (Tático Genérico):** TurnManager + ICombatResolver plugável (3 exemplos em gyms: banner_saga, hp_only, shield) + transição Caravana->Combate.
+- **Fase 3 (Tático Genérico):** TurnManager + ICombatResolver plugável (3 exemplos em systems/.../examples: banner_saga, hp_only, shield) + transição Caravana->Combate.
 - **Fase 4 (Habilidades Genéricas):** AbilitySystem stat_id + validator contra data/stats/ + 3 magias exemplo.
 - **Fase 5 (Polimento):** Swap placeholders, otimização, fixtures save compat.
 

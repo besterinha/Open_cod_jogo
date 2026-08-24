@@ -37,31 +37,21 @@ func move_unit(unit: Unit, target: Vector2i) -> bool:
 		unit.position = path_world[-1]
 		unit.moved.emit(target)
 		return true
-	const SEC_PER_CELL: float = 0.35 * 2.0  # dobro: 0.70 por célula
+	const SEC_PER_CELL: float = 0.70
 	var tw: Tween = unit.create_tween()
 	tw.set_parallel(false)
-	# 4-dir waypoints: slide sequencial por célula (não linha reta diagonal)
+	# 4-dir waypoints: slide sequencial por célula (não linha reta diagonal) + bob y no mesmo tween
 	for i in range(1, path_world.size()):
 		var nxt: Vector3 = path_world[i]
+		var base_y: float = nxt.y
 		tw.tween_property(unit, "position", nxt, SEC_PER_CELL).set_trans(Tween.TRANS_SINE).set_ease(
 			Tween.EASE_IN_OUT
 		)
-	# bob y em paralelo (mesmo tween, overlay)
-	var y_tw: Tween = unit.create_tween()
-	y_tw.set_parallel(false)
-	for i in range(1, path_world.size()):
-		var nxt_y: float = path_world[i].y
-		(
-			y_tw
-			. tween_property(unit, "position:y", nxt_y + 0.08, SEC_PER_CELL * 0.5)
-			. set_trans(Tween.TRANS_SINE)
-			. set_ease(Tween.EASE_IN_OUT)
-		)
-		(
-			y_tw
-			. tween_property(unit, "position:y", nxt_y, SEC_PER_CELL * 0.5)
-			. set_trans(Tween.TRANS_SINE)
-			. set_ease(Tween.EASE_IN_OUT)
+		tw.parallel().tween_method(
+			func(p: float) -> void: unit.position.y = base_y + sin(p * PI) * 0.08,
+			0.0,
+			1.0,
+			SEC_PER_CELL
 		)
 	tw.finished.connect(func() -> void: unit.moved.emit(target), CONNECT_ONE_SHOT)
 	return true

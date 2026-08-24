@@ -55,3 +55,7 @@ func test_vitoria_emite_battle_ended_time0() -> void:
 	assert_signal_emitted(turn, "battle_ended", "último inimigo morto dispara fim")
 	assert_signal_emit_count(turn, "battle_ended", 1)
 	assert_true(b.is_victory(0), "consumidor Board confirma vitória do time 0")
+	# guarda anti-duplo-emissão: end_turn pós-vitória (_next_turn consulta check_victory) não reemite
+	turn.end_turn()
+	await get_tree().process_frame
+	assert_signal_emit_count(turn, "battle_ended", 1, "guarda: battle_ended só uma vez")

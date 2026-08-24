@@ -52,8 +52,12 @@ func test_resolver_banner_saga_vs_hp_only_diferentes() -> void:
 	def.set_stat("armor", 3, db)
 	var abil := AbilityResource.new()
 	abil.efeitos = [{"stat_id": "hp", "delta": -6}]
-	var r_banner: CombatResolver = load("res://gyms/resolvers/resolver_banner_saga.gd").new()
-	var r_hp: CombatResolver = load("res://gyms/resolvers/resolver_hp_only.gd").new()
+	var r_banner: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/examples/resolver_banner_saga.gd").new()
+	)
+	var r_hp: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/examples/resolver_hp_only.gd").new()
+	)
 	var res_banner: Dictionary = r_banner.resolve(atk, def, abil, db)
 	var res_hp: Dictionary = r_hp.resolve(atk, def, abil, db)
 	# banner: 6-3 armor = 3 dano; hp_only: 6 dano
@@ -90,7 +94,9 @@ func test_shield_resolver_absorve() -> void:
 	def.set_stat("hp", 10, db)
 	var abil := AbilityResource.new()
 	abil.efeitos = [{"stat_id": "hp", "delta": -6}]
-	var r: CombatResolver = load("res://gyms/resolvers/resolver_shield.gd").new()
+	var r: CombatResolver = (
+		load("res://systems/tactical/combat/resolvers/examples/resolver_shield.gd").new()
+	)
 	var res: Dictionary = r.resolve(atk, def, abil, db)
 	# shield 4 absorve, restam 2 em hp
 	var shield_delta: int = 0

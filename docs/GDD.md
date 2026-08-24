@@ -11,7 +11,7 @@ Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/R
 ## 2. Pillars (3)
 1.  **Caravana = Coração** — Decisões difíceis na estrada têm custo real no combate (ex: moral baixa → penalidade plugável, ex: Banner Saga usa -willpower, mas fórmula é configurável).
 2.  **Tático Legível** — Grid quadrado 2.5D isométrico, posicionamento > DPS. **Stats 100% genéricos data-driven** (`data/stats/*.tres`) — você define quais atributos existem (HP, Armor, Shield, Mana, etc.), motor não trava. Touch preciso.
-3.  **Plugável = Longevidade** — Habilidades/eventos/stats são `.tres`/JSON, não código hardcoded. Resolver de combate plugável (`ICombatResolver`): Banner Saga `Armor vs Strength` é só 1 dos 3 exemplos em `gyms/`. Criar conteúdo não quebra Core.
+3.  **Plugável = Longevidade** — Habilidades/eventos/stats são `.tres`/JSON, não código hardcoded. Resolver de combate plugável (`ICombatResolver`): Banner Saga `Armor vs Strength` é só 1 dos 3 exemplos em `systems/tactical/combat/resolvers/examples/`. Criar conteúdo não quebra Core.
 
 ## 3. Core Loop
 ```
@@ -34,7 +34,7 @@ Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/R
 - **Grid:** Quadrado 2.5D isométrico fixo (45°, câmera ortogonal `Node3D`), `Cell = Vector2i`, `cell_size = 1.0`. Hex plugável via `IGridSystem`.
 - **Turnos:** `TeamRoundRobin` default (exemplo), plugável via `ITurnSystem` — você escolhe `Initiative`, `Speed-based`, etc. via `data/config/turn.tres`.
 - **Stats Core — 100% data-driven (`data/stats/attributes.tres`):** Você define quais atributos existem. Exemplo default: `hp, armor, willpower, movement` (Banner Saga-like), mas pode ser `hp, shield, mana, stamina` ou `vida, defesa, foco` — **motor não trava**. Cada unidade tem `UnitStats: Dictionary[stat_id -> int]` validado contra a definição. Sem hardcode `Strength/Armor`.
-- **Resolver Plugável (`ICombatResolver`):** Fórmula de dano é um `GDScript` Strategy. 3 exemplos já em `gyms/`:
+- **Resolver Plugável (`ICombatResolver`):** Fórmula de dano é um `GDScript` Strategy. 3 exemplos em `systems/tactical/combat/resolvers/examples/` (movidos de gyms/ p/ testes dependerem do build):
   - `resolver_banner_saga.gd`: `dano = max(0, atk - armor)` (exemplo)
   - `resolver_hp_only.gd`: `dano = atk` puro (exemplo)
   - `resolver_shield.gd`: escudo absorve primeiro (exemplo)
