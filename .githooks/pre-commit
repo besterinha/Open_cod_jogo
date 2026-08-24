@@ -56,6 +56,29 @@ if [ -n "$STAGED_SYS" ] && [ -z "$STAGED_TEST" ]; then
   echo "$STAGED_SYS" | head -n 10
   exit 1
 fi
+# Gate AVISO STAGED — func/sinal público novo sem integration (não bloqueia, amarelo)
+STAGED_DIFF=$(git diff --cached -U0 -- systems/ 2>/dev/null || true)
+STAGED_NEW_PUB=$(echo "$STAGED_DIFF" | grep -E "^\+\s*func\s+[^_]" | grep -v "func _" || true)
+STAGED_NEW_SIG=$(echo "$STAGED_DIFF" | grep -E "^\+\s*signal\s+" || true)
+STAGED_INT=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^tests/integration/.*\.gd$' || true)
+if [ -n "$STAGED_NEW_PUB" ]; then
+  FILTERED_PUB=$(echo "$STAGED_NEW_PUB" | grep -v "integration: exempt" || true)
+  STAGED_REMOVED=$(echo "$STAGED_DIFF" | grep -E "^\-\s*func\s+[^_]" || true)
+  if [ -z "$FILTERED_PUB" ]; then ADDED_CNT=0; else ADDED_CNT=$(echo "$FILTERED_PUB" | grep -c . 2>/dev/null || echo 0); fi
+  if [ -z "$STAGED_REMOVED" ]; then REMOVED_CNT=0; else REMOVED_CNT=$(echo "$STAGED_REMOVED" | grep -c . 2>/dev/null || echo 0); fi
+  STAGED_FILES_CNT=$(git diff --cached --name-only -- systems/ 2>/dev/null | wc -l | tr -d ' ')
+  if [ "$ADDED_CNT" -eq 1 ] && [ "$REMOVED_CNT" -eq 1 ] && [ "$STAGED_FILES_CNT" -eq 1 ]; then
+    echo -e "\033[33m::warning:: Rename puro STAGED detectado (1 remoção + 1 adição) — não conta como nova, calibrado\033[0m"
+  elif [ -n "$FILTERED_PUB" ] && [ -z "$STAGED_INT" ]; then
+    echo -e "\033[33m::warning:: AVISO: nova func pública em systems/ sem tests/integration/ (STAGED, não bloqueia 1 sprint)\033[0m"
+    echo "$FILTERED_PUB" | head -n 10
+    echo -e "\033[33mDica: adicione tests/integration/test_*_input_real.gd ou comente '# integration: exempt — motivo' (só getter puro)\033[0m"
+  fi
+fi
+if [ -n "$STAGED_NEW_SIG" ] && [ -z "$STAGED_INT" ]; then
+  echo -e "\033[33m::warning:: AVISO: novo signal em systems/ sem tests/integration/ (sinal sempre precisa consumidor)\033[0m"
+  echo "$STAGED_NEW_SIG" | head -n 10
+fi
 # A5: docs atualizados se systems/ui mudou — checa STAGED (per-commit) visível
 CHANGED_SYS_STAGED=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^systems/.*\.gd$|^ui/.*\.gd$' || true)
 CHANGED_DOCS_STAGED=$(git diff --cached --name-only --diff-filter=AM 2>/dev/null | grep -E '^docs/.*\.md$' || true)
