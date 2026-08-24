@@ -20,12 +20,18 @@
   "instructions": ["AGENTS.md", "docs/GDD.md", "docs/TDD.md"],
   "permission": {
     "read": "allow",
-    "edit": "allow",
     "glob": "allow",
     "grep": "allow",
     "list": "allow",
-    "bash": "allow",
-    "task": "allow",
+    "bash": {
+      "*": "allow",
+      "git push --force*": "ask",
+      "git push -f*": "ask"
+    },
+    "task": {
+      "*": "allow",
+      "general": "ask"
+    },
     "webfetch": "allow",
     "websearch": "allow",
     "skill": "allow",
@@ -34,5 +40,22 @@
     "external_directory": "allow",
     "doom_loop": "allow",
     "lsp": "allow"
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "edit": {
+          "*": "allow",
+          "data/**/*.tres": "deny",
+          "data/*/*.tres": "deny",
+          "data/*.tres": "deny",
+          "tests/**": "ask",
+          "tests/*": "ask",
+          "opencode.json": "ask",
+          ".opencode/**": "ask",
+          ".opencode/*": "ask"
+        }
+      }
+    }
   }
 }

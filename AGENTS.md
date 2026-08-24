@@ -51,6 +51,7 @@ godot --headless --export-release "Android" build.apk
 
 ## Regras de Agente
 - Sempre gratuito/MIT. Nada pago.
+- Permissões de `edit` não são contornadas via bash (tee/sed/python/etc.) — se negado, peça ao humano.
 - Toda nova habilidade/ação: criar em `gyms/` -> validar contrato -> mover para `data/` -> testes GUT + smoke -> CI bloqueia merge se falha.
 - Para IA gerar conteúdo: usar schema JSON documentado em `docs/TDD.md#schema-ia`.
 - Toda nova feature (habilidade, sistema, UI): testes `unit` (isolado, `new()` sem cena) + `integration` (completo `HUD+Combat+Board` com `watch_signals` e `await process_frame`) — CI bloqueia `contract/unit/integration/smoke` se falhar. Nunca só isolado.

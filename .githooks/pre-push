@@ -1,6 +1,18 @@
 #!/bin/bash
 # Pre-push: gates lentos (integration+smoke+e2e) — visível, bloqueia push se falhar
 set -e
+# Guardião force-only main (recomendado Force-only; STRICT=1 recusa todo push direto)
+# Para recusar TODO push em main, exporte STRICT=1 antes do push: STRICT=1 git push
+ZERO="0000000000000000000000000000000000000000"
+while read -r lref lsha rref rsha; do
+  case "$rref" in
+    refs/heads/main)
+      if [ "$lsha" = "$ZERO" ]; then echo "pre-push: deletar main BLOQUEADO"; exit 1; fi
+      if [ "$rsha" != "$ZERO" ] && ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then echo "pre-push: force-push em main BLOQUEADO"; exit 1; fi
+      if [ "${STRICT:-0}" = "1" ]; then echo "pre-push: push direto em main BLOQUEADO (STRICT=1)"; exit 1; fi
+      ;;
+  esac
+done
 echo "pre-push: integration + smoke+e2e (lento, ~10s) — AGENTS.md 70/25/5"
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gexit 2>&1 | tail -n 15 || { echo "pre-push: integration falhou — corrija antes do push"; exit 1; }
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/smoke -gdir=res://tests/e2e -gexit 2>&1 | tail -n 15 || { echo "pre-push: smoke/e2e falhou"; exit 1; }
