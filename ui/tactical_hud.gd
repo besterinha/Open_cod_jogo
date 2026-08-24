@@ -12,11 +12,13 @@ var _abilities: Array[AbilityResource] = []
 var _selected: AbilityResource = null
 var _current_unit: Unit = null
 
+
 func _ready() -> void:
 	end_btn.pressed.connect(func() -> void: end_turn_pressed.emit())
 	_load_abilities()
 	# escuta turno para atualizar disabled por custo
 	EventBus.turn_changed.connect(_on_turn_changed)
+
 
 func _load_abilities() -> void:
 	# limpa antigos (mantém EndTurn)
@@ -37,6 +39,7 @@ func _load_abilities() -> void:
 				_create_button(a as AbilityResource)
 	_update_selection()
 
+
 func _create_button(abil: AbilityResource) -> void:
 	var btn := Button.new()
 	btn.name = abil.id
@@ -53,7 +56,8 @@ func _create_button(abil: AbilityResource) -> void:
 		btn.tooltip_text = "Alc %d Area %s" % [abil.alcance, abil.area]
 	btn.pressed.connect(func() -> void: _on_ability_pressed(abil, btn))
 	hbox.add_child(btn)
-	hbox.move_child(btn, hbox.get_child_count() - 2) # antes do EndTurn
+	hbox.move_child(btn, hbox.get_child_count() - 2)  # antes do EndTurn
+
 
 func _on_ability_pressed(abil: AbilityResource, btn: Button) -> void:
 	_selected = abil
@@ -66,6 +70,7 @@ func _on_ability_pressed(abil: AbilityResource, btn: Button) -> void:
 	print("[HUD] Selecionada %s" % abil.nome)
 	_update_buttons()
 
+
 func _on_turn_changed(unit: Unit) -> void:
 	_current_unit = unit
 	_update_buttons()
@@ -73,6 +78,7 @@ func _on_turn_changed(unit: Unit) -> void:
 	if _selected == null and not _abilities.is_empty():
 		_selected = _abilities[0]
 		ability_selected.emit(_selected)
+
 
 func _update_buttons() -> void:
 	if _current_unit == null:
@@ -89,9 +95,11 @@ func _update_buttons() -> void:
 				child.disabled = not can
 				child.modulate.a = 1.0 if can else 0.5
 
+
 func _update_selection() -> void:
 	if not _abilities.is_empty() and _selected == null:
 		_selected = _abilities[0]
+
 
 func get_selected() -> AbilityResource:
 	return _selected

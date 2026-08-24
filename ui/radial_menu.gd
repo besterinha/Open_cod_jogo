@@ -9,6 +9,7 @@ signal action_pressed(action: String)
 
 var _open: bool = false
 
+
 func _ready() -> void:
 	center.pressed.connect(_toggle)
 	# conecta cada fatia
@@ -20,6 +21,7 @@ func _ready() -> void:
 	container.visible = false
 	center.text = "☰"
 
+
 func _toggle() -> void:
 	_open = not _open
 	container.visible = _open
@@ -28,21 +30,24 @@ func _toggle() -> void:
 	if _open:
 		_layout_radial()
 
+
 func _layout_radial() -> void:
 	var radius: float = 90.0
 	var actions: Array = container.get_children()
 	var count: int = actions.size()
 	for i in count:
 		var btn: Control = actions[i] as Control
-		var angle: float = (TAU * i / count) - PI/2.0 # começa em cima
+		var angle: float = (TAU * i / count) - PI / 2.0  # começa em cima
 		var pos: Vector2 = Vector2(cos(angle), sin(angle)) * radius
 		# container está centrado no Center, então pos relativo
 		btn.position = pos - btn.size * 0.5
 
+
 func _on_action(action_name: String) -> void:
 	# action_name = nome do botão (Viajar, Descansar...)
 	action_pressed.emit(action_name.to_lower())
-	_toggle() # fecha após escolher
+	_toggle()  # fecha após escolher
+
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and event.pressed and _open:
