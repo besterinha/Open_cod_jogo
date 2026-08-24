@@ -26,18 +26,25 @@ func _load_abilities() -> void:
 		if child != end_btn and child is Button:
 			child.queue_free()
 	_abilities.clear()
-	var paths: Array[String] = [
-		"res://data/abilities/strike.tres",
-		"res://data/abilities/heal.tres",
-		"res://data/abilities/fireball.tres",
-	]
-	for p in paths:
-		if ResourceLoader.exists(p):
-			var a: Resource = load(p)
+	# T2: plug = soltar .tres em data/abilities/ — glob substitui lista fixa
+	var dir := DirAccess.open("res://data/abilities/")
+	if dir == null:
+		return
+	dir.list_dir_begin()
+	var file: String = dir.get_next()
+	while file != "":
+		if file.ends_with(".tres") and not dir.current_is_dir():
+			var a: Resource = load("res://data/abilities/" + file)
 			if a is AbilityResource:
-				_abilities.append(a as AbilityResource)
-				_create_button(a as AbilityResource)
+				_add_ability(a as AbilityResource)
+		file = dir.get_next()
+	dir.list_dir_end()
 	_update_selection()
+
+
+func _add_ability(abil: AbilityResource) -> void:
+	_abilities.append(abil)
+	_create_button(abil)
 
 
 func _create_button(abil: AbilityResource) -> void:

@@ -10,7 +10,7 @@ Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/R
 
 ## 2. Pillars (3)
 1.  **Caravana = Coração** — Decisões difíceis na estrada têm custo real no combate (ex: moral baixa → penalidade plugável, ex: Banner Saga usa -willpower, mas fórmula é configurável).
-2.  **Tático Legível** — Grid quadrado 2.5D isométrico, posicionamento > DPS. **Stats 100% genéricos data-driven** (`data/stats/*.tres`) — você define quais atributos existem (HP, Armor, Shield, Mana, etc.), motor não trava. **Terreno plugável por tokens** (`data/maps/*.tres`: muros, custo, piso de dano — T1). Touch preciso.
+2.  **Tático Legível** — Grid quadrado 2.5D isométrico, posicionamento > DPS. **Stats 100% genéricos data-driven** (`data/stats/*.tres`) — você define quais atributos existem (HP, Armor, Shield, Mana, etc.), motor não trava. **Terreno plugável por tokens** (`data/maps/*.tres`: muros, custo, piso de dano — T1). **Formas de área plugáveis** (`AreaShape` Strategy: cone, anel, custom — T2). Touch preciso.
 3.  **Plugável = Longevidade** — Habilidades/eventos/stats são `.tres`/JSON, não código hardcoded. Resolver de combate plugável (`ICombatResolver`): Banner Saga `Armor vs Strength` é só 1 dos 3 exemplos em `systems/tactical/combat/resolvers/examples/`. Criar conteúdo não quebra Core.
 
 ## 3. Core Loop

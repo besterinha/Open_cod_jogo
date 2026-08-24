@@ -21,8 +21,15 @@ static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Arr
 	if alcance < 0 or alcance > 10:
 		errs.append("alcance fora de 0..10: %d" % alcance)
 	var area: String = res.get("area") if "area" in res else ""
-	if area != "" and area not in ALLOWED_AREAS:
-		errs.append("area inválida: %s (permitido: %s)" % [area, ", ".join(ALLOWED_AREAS)])
+	var area_shape: AreaShape = res.get("area_shape") if "area_shape" in res else null
+	if area_shape != null:
+		# T2: shape custom plugado — string legada ignorada se vazia; valida script da interface
+		if not area_shape.has_method("get_cells"):
+			errs.append("area_shape sem get_cells(origin,target,grid)")
+	elif area != "" and area not in ALLOWED_AREAS:
+		errs.append(
+			"area inválida: %s (permitido: %s ou area_shape)" % [area, ", ".join(ALLOWED_AREAS)]
+		)
 	var custo = res.get("custo") if "custo" in res else null
 	if custo != null and typeof(custo) == TYPE_DICTIONARY:
 		for k in custo.keys():

@@ -216,7 +216,14 @@ Input → handler → estado seleção → sistema turno lido. Teste que `assert
 - **Piso de dano:** aplicado uma vez ao entrar (`on_unit_entered` → `modify_stat`, sinal `damage_floor_triggered`)
 - **LOS:** `GridSystem.has_line_of_sight(from, to, opaque)` Bresenham supercover; endpoints ignorados; pronta para `requires_los` no T4
 - Visual placeholder: muro escuro, dano laranja (unshaded)
-Schema IA em `#schema-ia`. Próximas fases: T2 áreas Strategy, T3 status effects, T4 classes/targeting, T5 movimento especial.
+Schema IA em `#schema-ia`. Próximas fases: T3 status effects, T4 classes/targeting, T5 movimento especial.
+
+## 4d. Áreas Strategy — formas plugáveis (T2)
+`AreaShape` (Resource Strategy): `get_cells(origin, target, grid) -> Array[Vector2i]`. Built-ins registrados em `AreaShapeRegistry` (`systems/ability/areas/`): `single, 3x3, cross, line` (legado) + `cone (length)`, `ring (radius)`.
+- **Plug:** `AbilityResource.area_shape: AreaShape` no `.tres` vence a string legada; sem shape, `resolve_area_cells` delega ao registry pelo id
+- **Validator:** com `area_shape` setado pula whitelist de strings; valida interface `get_cells`
+- **HUD plug = soltar `.tres` em `data/abilities/`** — glob substituiu lista fixa de 3
+- Exemplos: `data/abilities/conejato.tres`, `anelado.tres` (origem gyms/example_dev/habilidades_area/)
 
 ## 4b. Movimento Tático — 4-dir + 0.70s per-cell
 `MovementSystem.move_unit` usa `A* Manhattan 4-dir` `find_path` e anima waypoints sequenciais `0.70s per-cell` via `Tween` `SINE`, não linha reta. **Occupancy é imediata** ao iniciar o movimento (`update_occupancy` antes do tween) — previne 2 unidades na mesma célula durante a animação; posição visual chega depois (decisão ADR-007b). Bob do eixo y roda no mesmo tween via `tween_method`. **Lock anti-stack**: `is_moving(unit)` + `move_unit` rejeita enquanto anima (`_active: unit_id -> Tween`) — multi-tap não acelera nem corta caminho (regression move_stack). **1 movimento por turno** (GDD "Mover + Ação"): arena `moves_left=1` resetado em `_on_turn_started`; zerado limpa highlights verdes, mantém azul da habilidade. `TacticalArena._handle_tap` separa intenção `ataque (inimigo+can_use) vs move (walkable)` e ignora `próprio tile` para não gerar `VFX explosão` ao andar. `long-press 0.6s` mostra `Label3D` info. Vitória: `TeamRoundRobin._next_turn` chama `check_victory`; arena também conecta `unit_defeated -> check_victory` (guarda `_battle_over` anti-dupla emissão). Fundo branco: `default_env.tres background_mode=1 (BG_COLOR)` + `default_clear_color branco` (mode 0 ignora background_color — regression bg_white).

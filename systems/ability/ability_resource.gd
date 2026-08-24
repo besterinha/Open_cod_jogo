@@ -10,10 +10,20 @@ extends Resource
 @export var custo: Dictionary = {}  # {stat_id: int} genérico — validado contra AttributeDatabase
 @export var alcance: int = 1
 @export var area: String = "single"  # single, 3x3, cross, line — validado por DataValidator
+@export var area_shape: AreaShape = null  # T2: forma plugável custom — sobrepõe a string quando set
 @export var efeitos: Array = []  # [{"stat_id": "hp", "delta": -5}, ...] genérico (untyped para evitar cast Array[Dictionary])
 @export var tags_required: PackedStringArray = []
 @export var vfx: PackedScene
 @export var logic_script: GDScript  # deve implementar IAbilityLogic interface
+
+
+func resolve_area_cells(
+	user_cell: Vector2i, target_cell: Vector2i, grid: GridSystem
+) -> Array[Vector2i]:
+	# T2: shape custom tem precedência; senão delega ao registry legado de strings.
+	if area_shape != null:
+		return area_shape.get_cells(user_cell, target_cell, grid)
+	return AreaShapeRegistry.cells_for(area, user_cell, target_cell, grid)
 
 
 func can_activate(user: Node, target_cell: Vector2i) -> bool:

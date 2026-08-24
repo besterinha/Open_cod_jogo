@@ -37,34 +37,7 @@ func can_use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i
 
 
 func get_area_cells(origin: Vector2i, area: String) -> Array[Vector2i]:
-	match area:
-		"single":
-			return [origin]
-		"3x3":
-			var out: Array[Vector2i] = []
-			for dx in range(-1, 2):
-				for dy in range(-1, 2):
-					var c: Vector2i = origin + Vector2i(dx, dy)
-					if board.grid.is_within_bounds(c):
-						out.append(c)
-			return out
-		"cross":
-			var out: Array[Vector2i] = [origin]
-			for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
-				var c: Vector2i = origin + d
-				if board.grid.is_within_bounds(c):
-					out.append(c)
-			return out
-		"line":
-			# linha de 3 na direção do alvo (simplificado)
-			var out: Array[Vector2i] = [origin]
-			for i in range(1, 3):
-				var c: Vector2i = origin + Vector2i(i, 0)
-				if board.grid.is_within_bounds(c):
-					out.append(c)
-			return out
-		_:
-			return [origin]
+	return AreaShapeRegistry.cells_for(area, origin, origin, board.grid)
 
 
 func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) -> bool:
@@ -73,7 +46,7 @@ func use_ability(user: Unit, ability: AbilityResource, target_cell: Vector2i) ->
 	# paga custo genérico
 	if not user.pay_cost(ability.custo):
 		return false
-	var area_cells: Array[Vector2i] = get_area_cells(target_cell, ability.area)
+	var area_cells: Array[Vector2i] = ability.resolve_area_cells(user.cell, target_cell, board.grid)
 	ability_used.emit(user, ability, area_cells)
 	# aplica lógica custom da ability se tiver
 	ability.activate(user, area_cells)
