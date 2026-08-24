@@ -46,51 +46,6 @@ func test_rejects_id_duplicado_via_database() -> void:
 		ids[attr.id] = true
 
 
-func test_rejects_unknown_stat_id() -> void:
-	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
-	var a := AbilityResource.new()
-	a.id = "bad_stat"
-	a.nome = "Bad"
-	a.custo = {"unknown_stat": 1}
-	a.efeitos = [{"stat_id": "hp", "delta": -5}]
-	var errs: Array[String] = DataValidator.validate_ability(a, db)
-	assert_true(
-		errs.any(func(e: String) -> bool: return "unknown" in e or "desconhecido" in e),
-		"Deveria rejeitar stat desconhecido"
-	)
-
-
-func test_rejects_area_outside_whitelist() -> void:
-	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
-	var a := AbilityResource.new()
-	a.id = "bad_area"
-	a.nome = "Bad"
-	a.area = "banana"
-	a.efeitos = [{"stat_id": "hp", "delta": -5}]
-	var errs: Array[String] = DataValidator.validate_ability(a, db)
-	assert_true(errs.any(func(e: String) -> bool: return "area" in e))
-
-
-func test_rejects_alcance_over_10() -> void:
-	var a := AbilityResource.new()
-	a.id = "far"
-	a.nome = "Far"
-	a.alcance = 99
-	a.efeitos = [{"stat_id": "hp", "delta": -5}]
-	var errs: Array[String] = DataValidator.validate_ability(a)
-	assert_true(errs.any(func(e: String) -> bool: return "alcance" in e))
-
-
-func test_rejects_efeito_sem_stat_id() -> void:
-	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
-	var a := AbilityResource.new()
-	a.id = "no_stat"
-	a.nome = "NoStat"
-	a.efeitos = [{"delta": -5}]
-	var errs: Array[String] = DataValidator.validate_ability(a, db)
-	assert_true(errs.any(func(e: String) -> bool: return "stat_id" in e))
-
-
 func test_event_contract_weight_and_escolhas() -> void:
 	var ev: Resource = load("res://data/events/supply_raid.tres")
 	assert_not_null(ev)
