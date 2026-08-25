@@ -23,6 +23,31 @@ func test_all_abilities_in_data_pass_contract() -> void:
 	assert_true(count >= 3, "deve ter pelo menos 3 abilities")
 
 
+func test_alvo_whitelist_e_heal_aliado() -> void:
+	var db: AttributeDatabase = load("res://data/stats/attributes.tres") as AttributeDatabase
+	# valor inválido rejeitado
+	var bad := AbilityResource.new()
+	bad.id = "alvo_bad"
+	bad.nome = "AlvoBad"
+	bad.efeitos = [{"stat_id": "hp", "delta": -5}]
+	bad.alvo = "todos"
+	var errs: Array[String] = DataValidator.validate_ability(bad, db)
+	assert_true(
+		errs.any(func(e: String) -> bool: return e.contains("alvo")),
+		"alvo fora da whitelist deve falhar: %s" % [errs]
+	)
+	# defaults válidos
+	var ok := AbilityResource.new()
+	ok.id = "alvo_ok"
+	ok.nome = "AlvoOk"
+	ok.efeitos = [{"stat_id": "hp", "delta": -5}]
+	assert_eq(DataValidator.validate_ability(ok, db).size(), 0, "default inimigo é válido")
+	# heal.tres deve declarar alvo aliado (bug cura-em-inimigo)
+	var heal: Resource = load("res://data/abilities/heal.tres")
+	if heal != null and "alvo" in heal:
+		assert_eq(heal.get("alvo"), "aliado", "heal.tres precisa alvo=aliado")
+
+
 func test_rejects_vfx_inexistente() -> void:
 	var a := AbilityResource.new()
 	a.id = "bad_vfx"

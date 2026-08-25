@@ -101,7 +101,7 @@ func _ready() -> void:
 		if hud.has_signal("ability_selected"):
 			hud.connect("ability_selected", _on_hud_ability_selected)
 		if hud.has_signal("end_turn_pressed"):
-			hud.connect("end_turn_pressed", func() -> void: turn_manager.end_turn())
+			hud.connect("end_turn_pressed", _request_end_turn)
 		# seleciona primeira habilidade como default
 		if hud.has_method("get_selected"):
 			selected_ability = hud.get_selected()
@@ -368,6 +368,24 @@ func _on_turn_started(unit: Unit) -> void:
 		_play_ai(unit)
 
 
+func _request_end_turn() -> void:
+	# regression endturn_spam: só o jogador passa a PRÓPRIA vez — nunca pula a IA
+	var u: Unit = turn_manager.get_current_unit()
+	if u == null or turn_manager.is_battle_over():
+		return
+	if u.team != 0:
+		var hud0: Node = get_node_or_null("CanvasLayer/TacticalHUD")
+		if hud0:
+			hud0.show_toast("Não é a sua vez", true)
+		return
+	if movement.is_moving(u):
+		var hud1: Node = get_node_or_null("CanvasLayer/TacticalHUD")
+		if hud1:
+			hud1.show_toast("Aguarde o movimento terminar", true)
+		return
+	turn_manager.end_turn()
+
+
 func _play_ai(unit: Unit) -> void:
 	var ai := preload("res://systems/tactical/ai/aggressive_ai.gd").new()
 	ai.focus_stat_id = "hp"
@@ -533,6 +551,30 @@ func _highlight_reachable(unit: Unit) -> void:
 			$TacticalBoard.add_child(hl2)
 
 
+func _try_use_ability(unit: Unit, cell: Vector2i, hud: Node) -> bool:
+	# fluxo comum de uso + toasts visíveis (prints não existem no device)
+	if combat.can_use_ability(unit, selected_ability, cell):
+		if combat.use_ability(unit, selected_ability, cell):
+			print(
+				"[Combat Touch] %s usou %s em %s" % [unit.display_name, selected_ability.nome, cell]
+			)
+			turn_manager.end_turn()
+			return true
+		print("[Combat] Falha use_ability %s em %s" % [selected_ability.nome, cell])
+		if hud:
+			hud.show_toast("Falha ao usar %s" % selected_ability.nome, true)
+		return false
+	print(
+		(
+			"[Combat] Não pode usar %s em %s (alcance/custo %s)"
+			% [selected_ability.nome, cell, selected_ability.custo]
+		)
+	)
+	if hud:
+		hud.show_toast("%s: fora de alcance ou sem recurso" % selected_ability.nome, true)
+	return false
+
+
 func _handle_tap(pos: Vector2) -> void:
 	var unit: Unit = turn_manager.get_current_unit()
 	if unit == null or unit.team != 0:
@@ -552,37 +594,30 @@ func _handle_tap(pos: Vector2) -> void:
 	if not board.grid.is_within_bounds(cell):
 		return
 	print("[Input] Tap %s" % cell)
-	# não atacar a si mesmo ao clicar no próprio tile (evita explosão)
+	var target_unit: Unit = board.get_unit_at(cell)
+	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
+	# cura em si (regression heal_ally): alvo != "inimigo" permite tap no próprio tile
+	if cell == unit.cell and selected_ability != null and selected_ability.alvo != "inimigo":
+		if _try_use_ability(unit, cell, hud):
+			return
+		return  # falha já notificada com toast
 	if cell == unit.cell:
 		print("[Input] Tap próprio tile, ignora")
 		return
-	var target_unit: Unit = board.get_unit_at(cell)
-	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
-	# intenção ataque só se há inimigo + habilidade selecionada + can_use (consumidor Combat)
-	if target_unit and target_unit.team != unit.team and selected_ability != null:
-		if combat.can_use_ability(unit, selected_ability, cell):
-			if combat.use_ability(unit, selected_ability, cell):
-				print(
-					(
-						"[Combat Touch] %s usou %s em %s"
-						% [unit.display_name, selected_ability.nome, cell]
-					)
-				)
-				turn_manager.end_turn()
-			else:
-				print("[Combat] Falha use_ability %s em %s" % [selected_ability.nome, cell])
-				if hud:
-					hud.show_toast("Falha ao usar %s" % selected_ability.nome, true)
-		else:
-			print(
-				(
-					"[Combat] Não pode usar %s em %s (alcance/custo %s)"
-					% [selected_ability.nome, cell, selected_ability.custo]
-				)
-			)
-			if hud:
-				hud.show_toast("%s: fora de alcance ou sem recurso" % selected_ability.nome, true)
-		return
+	# intenção de uso respeita AbilityResource.alvo (data-driven):
+	var alvo_valido := false
+	if target_unit != null and selected_ability != null:
+		match selected_ability.alvo:
+			"inimigo":
+				alvo_valido = target_unit.team != unit.team
+			"aliado":
+				alvo_valido = target_unit.team == unit.team
+			"qualquer":
+				alvo_valido = true
+	if alvo_valido:
+		if _try_use_ability(unit, cell, hud):
+			return
+		return  # falha já notificada com toast
 	# se tem unidade (aliada ou sem habilidade), não explode — ignora ataque
 	if target_unit:
 		print("[Input] Unidade aliada/própria em %s, sem ataque (sem explosão)" % cell)
@@ -688,6 +723,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_SPACE:
-			turn_manager.end_turn()
+			_request_end_turn()
 		elif event.keycode == KEY_J:
 			get_tree().change_scene_to_file("res://content/maps/journey_map.tscn")

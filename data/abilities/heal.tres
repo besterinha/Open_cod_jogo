@@ -16,4 +16,5 @@ efeitos = [{
 "stat_id": "hp",
 "delta": 5
 }]
+alvo = "aliado"
 logic_script = ExtResource("2_ddd")

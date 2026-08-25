@@ -39,7 +39,7 @@ Caravana em jornada 1D side-scrolling com gestão de recursos (Supplies/Morale/R
   - `resolver_hp_only.gd`: `dano = atk` puro (exemplo)
   - `resolver_shield.gd`: escudo absorve primeiro (exemplo)
   Você registra qual usar no `Registry` — trocar é 1 linha, sem tocar em `AbilityResource`.
-- **Habilidades:** `AbilityResource`: `nome, custo {stat_id: valor}` (genérico, não só willpower), `alcance, area, efeitos [Resource genérico], vfx, logic_script`. Área via `floodfill`.
+- **Habilidades:** `AbilityResource`: `nome, custo {stat_id: valor}` (genérico, não só willpower), `alcance, area, alvo (inimigo|aliado|qualquer — cura em aliado/si), efeitos [Resource genérico], vfx, logic_script`. Área via `floodfill`.
 - **IA Inimiga:** `IAIBehavior` plugável genérica (`Agressive` exemplo foca `hp` baixo — stat id configurável).
 
 ## 6. Progressão & Conteúdo Plugável

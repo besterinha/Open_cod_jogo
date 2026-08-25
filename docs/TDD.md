@@ -100,6 +100,7 @@ class_name AbilityResource extends Resource
 @export var custo: Dictionary = {} # {stat_id: valor} ex: {"willpower":1} ou {"mana":3,"stamina":1} — validado contra data/stats/
 @export var alcance: int = 1
 @export var area: String = "single" # single, 3x3, cross, line
+@export var alvo: String = "inimigo" # inimigo | aliado | qualquer
 @export var efeitos: Array[Resource] # Array[StatEffect] genérico: {stat_id, delta, element}
 @export var tags_required: PackedStringArray
 @export var vfx: PackedScene
@@ -162,12 +163,13 @@ class_name EventChoice extends Resource
   "custo": {"mana": 3}, // stat_id genérico, validado contra data/stats/
   "alcance": 5,
   "area": "3x3",
+  "alvo": "inimigo", // inimigo | aliado | qualquer — quem recebe os efeitos (default inimigo)
   "efeitos": [{"stat_id": "hp", "delta": -12, "element": "fire"}, {"stat_id": "burn", "delta": 2}],
   "vfx": "res://placeholders/vfx_circle.tscn",
   "logic_script": "res://systems/ability/logics/area_damage.gd"
 }
 ```
-Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, `alcance > 10`, `area` não em whitelist.
+Validator rejeita se: `custo` contém `stat_id` não definido em `data/stats/`, `alcance > 10`, `area` não em whitelist, `alvo` não em `inimigo|aliado|qualquer`.
 
 ### Evento JSON
 ```json

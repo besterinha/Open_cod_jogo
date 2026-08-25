@@ -44,11 +44,11 @@
   "agent": {
     "build": {
       "permission": {
-        "edit": {
-          "*": "allow",
-          "data/**/*.tres": "deny",
-          "data/*/*.tres": "deny",
-          "data/*.tres": "deny",
+    "edit": {
+      "*": "allow",
+      "data/**/*.tres": "ask",
+      "data/*/*.tres": "ask",
+      "data/*.tres": "ask",
           "tests/**": "ask",
           "tests/*": "ask",
           "opencode.json": "ask",

@@ -4,6 +4,7 @@ extends RefCounted
 # Usado por GUT + godot-validation-flow + CI. IA nunca passa sem isso.
 
 const ALLOWED_AREAS: Array[String] = ["single", "3x3", "cross", "line"]
+const ALLOWED_ALVOS: Array[String] = ["inimigo", "aliado", "qualquer"]
 
 
 static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Array[String]:
@@ -30,6 +31,9 @@ static func validate_ability(res: Resource, db: AttributeDatabase = null) -> Arr
 		errs.append(
 			"area inválida: %s (permitido: %s ou area_shape)" % [area, ", ".join(ALLOWED_AREAS)]
 		)
+	var alvo: String = res.get("alvo") if "alvo" in res else "inimigo"
+	if alvo not in ALLOWED_ALVOS:
+		errs.append("alvo inválido: %s (permitido: %s)" % [alvo, ", ".join(ALLOWED_ALVOS)])
 	var custo = res.get("custo") if "custo" in res else null
 	if custo != null and typeof(custo) == TYPE_DICTIONARY:
 		for k in custo.keys():

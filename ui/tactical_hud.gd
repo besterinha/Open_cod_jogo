@@ -131,6 +131,9 @@ func _on_ability_pressed(abil: AbilityResource, btn: Button) -> void:
 func _on_turn_changed(unit: Unit) -> void:
 	_current_unit = unit
 	_update_buttons()
+	# Passar Turno só existe na vez do jogador (regression endturn_spam)
+	end_btn.disabled = unit.team != 0
+	end_btn.modulate.a = 1.0 if unit.team == 0 else 0.5
 	# auto-seleciona primeira habilidade se nenhuma
 	if _selected == null and not _abilities.is_empty():
 		_selected = _abilities[0]

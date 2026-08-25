@@ -12,6 +12,7 @@ extends Resource
 @export var area: String = "single"  # single, 3x3, cross, line — validado por DataValidator
 @export var area_shape: AreaShape = null  # T2: forma plugável custom — sobrepõe a string quando set
 @export var efeitos: Array = []  # [{"stat_id": "hp", "delta": -5}, ...] genérico (untyped para evitar cast Array[Dictionary])
+@export var alvo: String = "inimigo"  # inimigo | aliado | qualquer — quem pode receber os efeitos
 @export var tags_required: PackedStringArray = []
 @export var vfx: PackedScene
 @export var logic_script: GDScript  # deve implementar IAbilityLogic interface

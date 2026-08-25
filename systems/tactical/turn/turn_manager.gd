@@ -34,6 +34,10 @@ func end_turn() -> void:
 	_next_turn()
 
 
+func is_battle_over() -> bool:
+	return _battle_over
+
+
 func _next_turn() -> void:
 	push_warning("TurnManager base: sobrescreva _next_turn em subclasse plugável")
 
