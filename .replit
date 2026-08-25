@@ -1,0 +1,40 @@
+# Config Replit — workflows do projeto (o contrato são os COMANDOS; se o schema
+# mudar, recrie os mesmos comandos na UI de Workflows — ver docs/WORKFLOW.md §4)
+run = "bash ci/validate.sh"
+
+entrypoint = "bash ci/validate.sh"
+
+[[workflows]]
+name = "Validate"
+label = "Validate"
+[[workflows.steps]]
+task = "shell.shell"
+command = "bash ci/validate.sh"
+
+[[workflows]]
+name = "Test"
+label = "Testes GUT completos"
+[[workflows.steps]]
+task = "shell.shell"
+command = "godot --headless --script addons/gut/gut_cmdln.gd -gexit"
+
+[[workflows]]
+name = "SelfTest"
+label = "Self-test de pacote"
+[[workflows.steps]]
+task = "shell.shell"
+command = "bash ci/export-selftest.sh"
+
+[[workflows]]
+name = "Serve APK"
+label = "Servir APK p/ celular"
+[[workflows.steps]]
+task = "shell.shell"
+command = "python3 -m http.server 8000 --directory build"
+
+[[workflows]]
+name = "Run"
+label = "Abrir o jogo (com display)"
+[[workflows.steps]]
+task = "shell.shell"
+command = "godot --path ."

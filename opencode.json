@@ -17,7 +17,7 @@
       "enabled": true
     }
   },
-  "instructions": ["AGENTS.md", "docs/GDD.md", "docs/TDD.md"],
+  "instructions": ["AGENTS.md", "docs/GDD.md", "docs/TDD.md", "docs/WORKFLOW.md"],
   "permission": {
     "read": "allow",
     "glob": "allow",
