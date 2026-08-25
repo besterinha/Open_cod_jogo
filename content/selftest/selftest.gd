@@ -18,6 +18,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 	var fails: Array[String] = []
+	var walls := 0
 	var arena: Node3D = load(ARENA_SCENE).instantiate() as Node3D
 	add_child(arena)
 	await get_tree().process_frame
@@ -31,7 +32,6 @@ func _ready() -> void:
 	else:
 		if not board.terrain.is_blocked(Vector2i(2, 1)):
 			fails.append("muro (2,1) não bloqueia")
-		var walls := 0
 		for x in 8:
 			for y in 8:
 				if board.terrain.is_blocked(Vector2i(x, y)):
@@ -95,6 +95,12 @@ func _ready() -> void:
 			)
 		)
 
+	# dump JSON de estado estruturado — leitura barata e precisa, sem screenshot
+	_dump_state_json(arena, board, walls)
+
+	# screenshot quando há display (xvfb conta) — verificação visual de UI/tiles
+	await _save_screenshot_if_display()
+
 	arena.queue_free()
 	if fails.is_empty():
 		print("[SelfTest] PASS")
@@ -104,3 +110,29 @@ func _ready() -> void:
 			push_error("[SelfTest] FAIL: " + f)
 		print("[SelfTest] FAIL: %s" % [fails])
 		get_tree().quit(1)
+
+
+func _dump_state_json(arena: Node3D, board: TacticalBoard, walls: int) -> void:
+	var units: Array = []
+	if board != null:
+		for u in board.units:
+			units.append({"id": u.unit_id, "pos": u.cell, "hp": u.get_stat("hp"), "team": u.team})
+	var state := {
+		"terreno": {"nivel": arena.terrain_level, "muros": walls},
+		"units": units,
+	}
+	print("[SelfTest] state=%s" % JSON.stringify(state))
+
+
+func _save_screenshot_if_display() -> void:
+	if DisplayServer.get_name() == "headless":
+		print("[SelfTest] screenshot: pulado (headless)")
+		return
+	await RenderingServer.frame_post_draw
+	var img: Image = get_viewport().get_texture().get_image()
+	if img == null or img.is_empty():
+		print("[SelfTest] screenshot: viewport vazio")
+		return
+	var path := "user://selftest.png"
+	img.save_png(path)
+	print("[SelfTest] screenshot=%s (%dx%d)" % [path, img.get_width(), img.get_height()])

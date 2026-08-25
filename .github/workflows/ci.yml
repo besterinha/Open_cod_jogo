@@ -114,7 +114,9 @@ jobs:
           bash ci/check-apk-content.sh build/debug.apk
       - name: Package self-test (roda o binário exportado e valida conteúdo)
         run: |
-          apt-get update -qq && apt-get install -y -qq zip >/dev/null 2>&1 || true
+          apt-get update -qq && apt-get install -y -qq zip xvfb \
+            libxcursor1 libxinerama1 libxrandr2 libxi6 libxkbcommon0 \
+            libgl1-mesa-dri libglx-mesa0 >/dev/null 2>&1 || true
           bash ci/export-selftest.sh
       - name: Tripwire export-safe (DirAccess sem marcador)
         run: |
