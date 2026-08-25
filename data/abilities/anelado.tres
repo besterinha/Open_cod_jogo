@@ -11,7 +11,7 @@ radius = 2
 [resource]
 script = ExtResource("1_ab")
 id = "anelado"
-nome = "[INSERIR_NOME_AQUI]"
+nome = "Anel de Pedra"
 custo = {
 "willpower": 1
 }

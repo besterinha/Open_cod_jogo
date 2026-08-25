@@ -195,7 +195,9 @@ func _update_diag_label() -> void:
 					floors += 1
 				"2", "3", "4", "5", "6", "7", "8", "9":
 					costs += 1
-	var ver: String = str(ProjectSettings.get_setting("application/config/version", "dev"))
+	var ver: String = str(ProjectSettings.get_setting("application/config/version", ""))
+	if ver.is_empty():
+		ver = "dev"
 	var abil_count: int = -1
 	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
 	if hud != null and hud.has_method("get_loaded_count"):

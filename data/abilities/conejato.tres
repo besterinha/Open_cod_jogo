@@ -11,7 +11,7 @@ length = 3
 [resource]
 script = ExtResource("1_ab")
 id = "conejato"
-nome = "[INSERIR_NOME_AQUI]"
+nome = "Cone de Fogo"
 custo = {
 "willpower": 1
 }
