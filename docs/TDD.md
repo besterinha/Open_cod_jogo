@@ -229,7 +229,11 @@ Listagem de diretório (`DirAccess.open/list_dir`) **não existe no pacote expor
 - **Padrão obrigatório:** lista explícita de paths via `ResourceLoader.exists`+`load` primeiro (funciona empacotado), glob `DirAccess` só como extra dedupado onde disponível — ex: `BASE_ABILITY_PATHS` (HUD), `BASE_EVENT_PATHS` (EventSystem)
 - **Ext_resource de Resource custom pode não bindar no device:** fallback `load(path)` direto no `_ready` (ex: layout da arena) + `push_error` visível
 - **Guardas mecânicas:** tripwire `DirAccess` sem `# export-safe` bloqueia pre-commit e CI; `ci/check-apk-content.sh` falha se recurso crítico sumir do APK
-- **Critério de pronto (device):** toda feature touch/export responde *"o que quebra só no celular?"* antes de fechado; validação manual no Redmi cobre o que headless não vê
+- **Bug raiz 0.3.1 (device):** conversão text→binário do export (`convert_text_resources_to_binary`) entregava `.tres` de Resource custom **com script mas sem propriedades** (`rows=[]`) — mapa ficava sem obstáculos no device. Fix duplo: setting `false` no project.godot + cadeia `_resolve_layout` valida CONTEÚDO (não só !=null): L1 ext_resource → L2 load(.tres) → L3 const embutida em código (script sempre viaja no PCK)
+- **Self-test de pacote:** `bash ci/export-selftest.sh` exporta binário Linux headless e roda `--selftest` DENTRO dele (cena `content/selftest/selftest.tscn` + autoload boot) verificando terreno/tiles/HUD/conteúdo de abilities — exit 0/1 bloqueia CI; é o que reproduz bugs "só no device" sem device
+- **Label diagnóstica:** arena mostra permanente `<versão> | terreno:L<n> muros:N espinho:N custo:N | abil:N` — reporte de bug de device começa por essa linha
+- **UI nunca silenciosa:** toda ação radial/falha de habilidade/movimento gera toast visível (prints não existem no device); botões mortos proibidos — ação não implementada = popup explícito
+- **Critério de pronto (device):** toda feature touch/export responde *"o que quebra só no celular?"* antes de fechado; self-test de pacote verde + validação manual no Redmi cobrem o que headless não vê
 - Pacing IA: `_play_ai` espera `is_moving(unit)` terminar antes de agir/end_turn (regression ai_pacing)
 - Exemplos: `data/abilities/conejato.tres`, `anelado.tres` (origem gyms/example_dev/habilidades_area/)
 

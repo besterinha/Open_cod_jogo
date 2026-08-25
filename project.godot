@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 name="Open_cod_jogo"
+version="0.3.1"
 run/main_scene="res://content/maps/journey_map.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
@@ -22,6 +23,7 @@ EventBus="*res://systems/common/event_bus.gd"
 Registry="*res://systems/common/registry.gd"
 SaveSystem="*res://systems/common/save_system.gd"
 StatsRegistry="*res://systems/stats/stats_registry.gd"
+SelfTestBoot="*res://content/selftest/selftest_boot.gd"
 
 [display]
 
@@ -66,3 +68,7 @@ android/enable_pan_and_scale_gestures=true
 [rendering]
 
 environment/defaults/default_environment="res://default_env.tres"
+
+[editor]
+
+export/convert_text_resources_to_binary=false

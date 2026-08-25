@@ -59,6 +59,41 @@ func _load_abilities() -> void:
 			file = dir.get_next()
 		dir.list_dir_end()
 	_update_selection()
+	_apply_selection_visual()
+
+
+func get_loaded_count() -> int:
+	return _abilities.size()
+
+
+func show_toast(texto: String, erro: bool = false) -> void:
+	# feedback visível touch (prints não existem no device)
+	var lbl := Label.new()
+	lbl.text = texto
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.modulate = Color(1, 0.35, 0.3) if erro else Color(0.95, 0.95, 0.6)
+	add_child(lbl)
+	lbl.reset_size()
+	lbl.position = Vector2((size.x - lbl.size.x) * 0.5, -140)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tw := create_tween()
+	tw.tween_interval(1.1)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func() -> void: lbl.queue_free())
+
+
+func _apply_selection_visual() -> void:
+	for child in hbox.get_children():
+		if child is Button and child != end_btn:
+			child.modulate = Color(1, 1, 1)
+	for child in hbox.get_children():
+		if (
+			child is Button
+			and child != end_btn
+			and _selected != null
+			and child.name == _selected.id
+		):
+			child.modulate = Color(1, 0.9, 0.4)
 
 
 func _add_ability(abil: AbilityResource) -> void:
@@ -88,11 +123,7 @@ func _create_button(abil: AbilityResource) -> void:
 func _on_ability_pressed(abil: AbilityResource, btn: Button) -> void:
 	_selected = abil
 	ability_selected.emit(abil)
-	# destaca seleção
-	for child in hbox.get_children():
-		if child is Button and child != end_btn:
-			child.modulate = Color(1, 1, 1)
-	btn.modulate = Color(1, 0.9, 0.4)
+	_apply_selection_visual()
 	print("[HUD] Selecionada %s" % abil.nome)
 	_update_buttons()
 
@@ -104,6 +135,7 @@ func _on_turn_changed(unit: Unit) -> void:
 	if _selected == null and not _abilities.is_empty():
 		_selected = _abilities[0]
 		ability_selected.emit(_selected)
+		_apply_selection_visual()
 
 
 func _update_buttons() -> void:

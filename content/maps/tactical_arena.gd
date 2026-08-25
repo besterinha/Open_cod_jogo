@@ -1,3 +1,4 @@
+class_name TacticalArena
 extends Node3D
 # Cena 2.5D tática — Motor Genérico Completo.
 # Integra: TacticalBoard + TurnManager + MovementSystem + CombatManager + AI
@@ -7,9 +8,25 @@ extends Node3D
 @onready var movement: MovementSystem = $MovementSystem
 @onready var combat: CombatManager = $CombatManager
 
+# Nível 3 export-safe (TDD §4e): layout embutido em código — script SEMPRE viaja no PCK,
+# então obstáculos são garantidos mesmo se .tscn ext_resource e load(.tres) falharem no device.
+const FALLBACK_SIZE := Vector2i(8, 8)
+const FALLBACK_DAMAGE := -2
+const FALLBACK_ROWS: PackedStringArray = [
+	"........",
+	"..##....",
+	"..##..3.",
+	"........",
+	"....^...",
+	"...44...",
+	"........",
+	"........",
+]
+
 var selected_unit: Unit = null
 var selected_ability: AbilityResource = null
 var moves_left: int = 1  # 1 movimento por turno (GDD: Mover + Ação)
+var terrain_level: String = "?"  # L1=.tscn | L2=load(.tres) | L3=código
 var _db: AttributeDatabase = null
 var _green_mat: StandardMaterial3D = null
 var _blue_mat: StandardMaterial3D = null
@@ -35,17 +52,18 @@ func _ready() -> void:
 	# Setup board — fonte única é TacticalBoard.grid_size/cell_size (default 8x8 já no .tscn)
 	board.grid = GridSystem.new(board.grid_size, board.cell_size)
 	var terrain_node: TerrainLayer = get_node_or_null("TerrainLayer") as TerrainLayer
-	if terrain_node != null and terrain_node.layout == null:
-		# export-safe: ext_resource pode não bindar — fallback por path direto
-		var fallback: Resource = load("res://data/maps/tactical_arena.tres")
-		if fallback is BoardLayoutResource:
-			terrain_node.layout = fallback as BoardLayoutResource
-	if terrain_node != null and terrain_node.layout != null:
-		board.terrain = terrain_node
-	else:
-		push_error("[TacticalArena] TerrainLayer sem layout — grid ficará todo-livre")
+	if terrain_node == null:
+		# export-safe: script do node pode não bindar no PCK — recria a camada em código (L3)
+		terrain_node = TerrainLayer.new()
+		terrain_node.name = "TerrainLayer"
+		add_child(terrain_node)
+	var loaded: Resource = load("res://data/maps/tactical_arena.tres")
+	var resolved: BoardLayoutResource = _resolve_layout(terrain_node.layout, loaded)
+	terrain_node.layout = resolved
+	board.terrain = terrain_node
 	_spawn_tiles()
 	_spawn_units()
+	_update_diag_label()
 	# sync CameraRig grid_limit com board
 	var rig: Node = get_node_or_null("CameraRig")
 	if rig and "grid_limit" in rig:
@@ -121,6 +139,72 @@ func _exit_tree() -> void:
 	# evita "Infinite loop detected" do bob set_loops após free da cena (vazava p/ testes)
 	if _arrow_tween:
 		_arrow_tween.kill()
+
+
+static func make_fallback_layout() -> BoardLayoutResource:
+	var l := BoardLayoutResource.new()
+	l.size = FALLBACK_SIZE
+	l.rows = FALLBACK_ROWS
+	l.damage_delta = FALLBACK_DAMAGE
+	return l
+
+
+static func _layout_tem_conteudo(l: BoardLayoutResource) -> bool:
+	# export descoberta 0.3.1: conversão text->binário pode entregar o .tres COM script
+	# mas SEM rows (objeto default). Validar CONTEÚDO, não só !=null.
+	return l != null and not l.rows.is_empty()
+
+
+func _resolve_layout(node_layout: BoardLayoutResource, loaded: Resource) -> BoardLayoutResource:
+	# Cadeia export-safe: L1 ext_resource (.tscn) → L2 load(.tres) → L3 const em código
+	if _layout_tem_conteudo(node_layout):
+		terrain_level = "L1"
+		return node_layout
+	if loaded is BoardLayoutResource and _layout_tem_conteudo(loaded as BoardLayoutResource):
+		if node_layout != null:
+			push_warning(
+				"[TacticalArena] layout do .tscn chegou vazio no pacote — usando .tres (L2)"
+			)
+		terrain_level = "L2"
+		return loaded as BoardLayoutResource
+	push_warning("[TacticalArena] .tres sem conteúdo no pacote — usando layout embutido (L3)")
+	terrain_level = "L3"
+	return make_fallback_layout()
+
+
+func _update_diag_label() -> void:
+	var layer: CanvasLayer = get_node_or_null("CanvasLayer") as CanvasLayer
+	if layer == null:
+		return
+	var lbl: Label = layer.get_node_or_null("DiagLabel") as Label
+	if lbl == null:
+		lbl = Label.new()
+		lbl.name = "DiagLabel"
+		lbl.add_theme_font_size_override("font_size", 14)
+		lbl.position = Vector2(430, 8)
+		layer.add_child(lbl)
+	var walls := 0
+	var floors := 0
+	var costs := 0
+	for x in board.terrain.layout.size.x:
+		for y in board.terrain.layout.size.y:
+			match board.terrain.layout.token_at(Vector2i(x, y)):
+				"#":
+					walls += 1
+				"^":
+					floors += 1
+				"2", "3", "4", "5", "6", "7", "8", "9":
+					costs += 1
+	var ver: String = str(ProjectSettings.get_setting("application/config/version", "dev"))
+	var abil_count: int = -1
+	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
+	if hud != null and hud.has_method("get_loaded_count"):
+		abil_count = hud.get_loaded_count()
+	lbl.text = (
+		"%s | terreno:%s muros:%d espinho:%d custo:%d | abil:%d"
+		% [ver, terrain_level, walls, floors, costs, abil_count]
+	)
+	lbl.modulate = Color(0.15, 0.15, 0.15)
 
 
 func _ensure_tile_mats() -> void:
@@ -473,6 +557,7 @@ func _handle_tap(pos: Vector2) -> void:
 		print("[Input] Tap próprio tile, ignora")
 		return
 	var target_unit: Unit = board.get_unit_at(cell)
+	var hud: Node = get_node_or_null("CanvasLayer/TacticalHUD")
 	# intenção ataque só se há inimigo + habilidade selecionada + can_use (consumidor Combat)
 	if target_unit and target_unit.team != unit.team and selected_ability != null:
 		if combat.can_use_ability(unit, selected_ability, cell):
@@ -486,6 +571,8 @@ func _handle_tap(pos: Vector2) -> void:
 				turn_manager.end_turn()
 			else:
 				print("[Combat] Falha use_ability %s em %s" % [selected_ability.nome, cell])
+				if hud:
+					hud.show_toast("Falha ao usar %s" % selected_ability.nome, true)
 		else:
 			print(
 				(
@@ -493,6 +580,8 @@ func _handle_tap(pos: Vector2) -> void:
 					% [selected_ability.nome, cell, selected_ability.custo]
 				)
 			)
+			if hud:
+				hud.show_toast("%s: fora de alcance ou sem recurso" % selected_ability.nome, true)
 		return
 	# se tem unidade (aliada ou sem habilidade), não explode — ignora ataque
 	if target_unit:
@@ -506,6 +595,8 @@ func _handle_tap(pos: Vector2) -> void:
 		# 1 movimento por turno (GDD: Mover + Ação)
 		if moves_left <= 0:
 			print("[Input] Sem movimentos neste turno — use habilidade ou Passar Turno")
+			if hud:
+				hud.show_toast("Sem movimentos neste turno", true)
 			return
 		if movement.can_move_to(unit, cell):
 			if movement.move_unit(unit, cell):

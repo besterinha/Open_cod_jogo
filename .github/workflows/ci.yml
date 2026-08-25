@@ -112,6 +112,10 @@ jobs:
         run: |
           apt-get update -qq && apt-get install -y -qq unzip >/dev/null 2>&1 || true
           bash ci/check-apk-content.sh build/debug.apk
+      - name: Package self-test (roda o binário exportado e valida conteúdo)
+        run: |
+          apt-get update -qq && apt-get install -y -qq zip >/dev/null 2>&1 || true
+          bash ci/export-selftest.sh
       - name: Tripwire export-safe (DirAccess sem marcador)
         run: |
           HITS=$(grep -rn "DirAccess" systems/ ui/ content/ --include="*.gd" | grep -v "export-safe" || true)

@@ -10,6 +10,27 @@ extends Node3D
 @onready var ui_bar: Control = $CanvasLayer/CaravanBar
 
 var distance_traveled: float = 0.0
+var last_action_outcome: String = ""  # observável p/ testes (§7b consumidor)
+
+
+func _show_toast(texto: String) -> void:
+	# feedback visível touch — prints não existem no device (TDD §4e)
+	var layer: CanvasLayer = get_node_or_null("CanvasLayer") as CanvasLayer
+	if layer == null:
+		return
+	var lbl := Label.new()
+	lbl.text = texto
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.modulate = Color(0.95, 0.95, 0.6)
+	layer.add_child(lbl)
+	lbl.reset_size()
+	var vp_size: Vector2 = layer.get_viewport().get_visible_rect().size
+	lbl.position = Vector2((vp_size.x - lbl.size.x) * 0.5, vp_size.y * 0.25)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var tw := create_tween()
+	tw.tween_interval(1.1)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.5)
+	tw.tween_callback(func() -> void: lbl.queue_free())
 
 
 func _ready() -> void:
@@ -62,31 +83,49 @@ func _on_travel_finished(_days: int) -> void:
 
 
 func _on_radial_action(action: String) -> void:
+	last_action_outcome = ""
 	match action:
 		"viajar":
 			travel.travel_one_day()
+			last_action_outcome = "travel"
+			_show_toast("Viajando... dia %d" % (caravan.day + 1))
 		"descansar":
 			camp.rest(1)
+			last_action_outcome = "rest"
+			_show_toast("Descansou (+moral, -suprimentos)")
 		"mercado":
 			market.buy_supplies(1)
+			last_action_outcome = "market"
 			print(
 				(
 					"[Market Touch] 1 Renown -> %d Supplies | supplies %d renown %d"
 					% [market.current_rate, caravan.supplies, caravan.renown]
 				)
 			)
+			_show_toast("Trocado 1 Renown -> %d Suprimentos" % market.current_rate)
 		"evento":
 			var ev: Resource = event_system.roll_random()
 			if ev:
 				print("[Event Touch] %s" % ev.get("titulo"))
 				if not ev.get("escolhas").is_empty():
 					event_system.apply_choice(ev, 0)
+				last_action_outcome = "event:%s" % ev.get("id")
+				_show_toast("Evento: %s" % ev.get("titulo"))
+			else:
+				last_action_outcome = "event:none"
+				_show_toast("Nenhum evento no ar")
 		"batalha":
+			last_action_outcome = "battle_requested"
 			EventBus.battle_requested.emit("radial_battle")
+		_:
+			last_action_outcome = "unknown:%s" % action
+			_show_toast("Ação em breve: %s" % action)
 
 
 func _on_battle_requested(_id: String) -> void:
 	print("[Journey] Transição para Tático: %s" % _id)
+	if get_tree().current_scene != self:
+		return  # em teste/editor não troca a cena do runner
 	get_tree().change_scene_to_file("res://content/maps/tactical_arena.tscn")
 
 
