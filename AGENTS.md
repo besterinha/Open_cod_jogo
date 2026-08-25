@@ -30,7 +30,7 @@ Fluxo de dependência: `content -> systems -> addons`, `ui -> systems`. CI bloqu
 - Placeholders em `placeholders/` (capsule/cube/circle) — swap por `Sprite3D` textura é só trocar referência no `.tres`.
 - 2.5D: cena `Node3D` + `Camera3D` ortogonal isométrica (45°), `Sprite3D` billboard para unidades.
 - Android: `touch tap` mover, `pinch` zoom, `long-press` info. Anchors para 720p–2K.
-- Validar antes de commit: `godot --headless --import` + `godot --headless --check-only` + `.editorconfig` (Tab/LF) + `godot-validation-flow` + `DataValidator` + `gut --headless -gexit` (CI falha se style/test != ok)
+- Validar antes de commit: `godot --headless --import` + `godot --headless --check-only` + `.editorconfig` (Tab/LF) + `godot-validation-flow` + `DataValidator` + `gut --headless -gexit` (CI falha se style/test != ok); antes de push: `bash ci/export-selftest.sh` (self-test de pacote, roda no pre-push)
 - Testes obrigatórios por feature (50/25/25, ADR-007; era 70/25/5 genérico): `unit` (isolado, lógica pura `RefCounted`) + `contract` (DataValidator) + `integration` (completo `HUD+Combat+Board`/`Input+Combat`/`Caravana->Tático` com `watch_signals`) + `smoke` (`await process_frame`) + `regression` (`test_regression_bug_<id>`) — piso `40/20/35` em `test_piramide_contract`
 - Commits: `feat:`, `fix:`, `docs:`, `chore:`. Gratuito apenas (sem asset pago).
 

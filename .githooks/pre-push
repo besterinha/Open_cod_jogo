@@ -16,4 +16,11 @@ done
 echo "pre-push: integration + smoke+e2e (lento, ~10s) — AGENTS.md 70/25/5"
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/integration -gexit 2>&1 | tail -n 15 || { echo "pre-push: integration falhou — corrija antes do push"; exit 1; }
 godot --headless --script addons/gut/gut_cmdln.gd -gdir=res://tests/smoke -gdir=res://tests/e2e -gexit 2>&1 | tail -n 15 || { echo "pre-push: smoke/e2e falhou"; exit 1; }
+# Self-test de pacote: exporta binário Linux e roda --selftest DENTRO dele (TDD §4e)
+echo "pre-push: self-test de pacote (~40s)..."
+bash ci/export-selftest.sh > /tmp/opencode/prepush_selftest.log 2>&1 || {
+  echo "pre-push: self-test de pacote FALHOU — recurso crítico não sobrevive ao empacotamento"
+  tail -n 15 /tmp/opencode/prepush_selftest.log
+  exit 1
+}
 echo "pre-push: tudo verde, push liberado"
